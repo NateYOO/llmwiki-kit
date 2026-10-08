@@ -7,29 +7,29 @@
 ## 1. 설치
 
 ### 1-1. 기본: 설치 문장 (Windows·macOS 공통, Codex 앱 채팅창)
-빈 폴더(`C:\llmwiki` / `~/llmwiki`)를 Codex에서 연 뒤 그대로 붙여 넣기 (강사가 `<REPO_URL>`을 실제 주소로 바꿔 배포):
+빈 폴더(`C:\llmwiki` / `~/llmwiki`)를 Codex에서 연 뒤 그대로 붙여 넣기:
 ```text
-LLM 위키 키트를 이 폴더에 설치해 주세요. 저장소: <REPO_URL>
+LLM 위키 키트를 이 폴더에 설치해 주세요. 저장소: https://github.com/NateYOO/llmwiki-kit
 1) 먼저 저에게 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 말하고,
 2) 제 컴퓨터에 맞는 아래 한 줄을 샌드박스 밖(승인 요청)으로 글자 그대로 실행한 뒤,
 3) 출력 끝의 RESULT: 줄과 AGENT: 줄이 시키는 대로만 하세요. 다른 명령은 만들지 마세요.
-Windows: [Console]::OutputEncoding=[Text.Encoding]::UTF8; iwr -useb <REPO_URL>/raw/main/setup/bootstrap-windows.ps1 -OutFile "$env:TEMP\llmwiki-bootstrap.ps1"; powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\llmwiki-bootstrap.ps1" -CheckOnly -RepoUrl <REPO_URL>
-macOS: curl -fsSL <REPO_URL>/raw/main/setup/bootstrap-mac.sh -o /tmp/llmwiki-bootstrap.sh && bash /tmp/llmwiki-bootstrap.sh --check-only --repo <REPO_URL>
+Windows: [Console]::OutputEncoding=[Text.Encoding]::UTF8; iwr -useb https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstrap-windows.ps1 -OutFile "$env:TEMP\llmwiki-bootstrap.ps1"; powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\llmwiki-bootstrap.ps1" -CheckOnly -RepoUrl https://github.com/NateYOO/llmwiki-kit
+macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstrap-mac.sh -o /tmp/llmwiki-bootstrap.sh && bash /tmp/llmwiki-bootstrap.sh --check-only --repo https://github.com/NateYOO/llmwiki-kit
 ```
 학생은 "곧 승인 창이 뜹니다. [승인]을 누르세요"가 나오면 [승인]만 누릅니다(보통 2번). Windows에서 화면이 어두워지는 확인 창(UAC)이 뜨면 [예], 안 보이면 작업 표시줄의 깜빡이는 방패 아이콘.
 에이전트 쪽 흐름(원본: `INSTALL_FOR_AGENT.md`):
 | 단계 | 명령 | 판정 |
 |---|---|---|
 | 1. 받기 + 폴더 점검 | 위 문장의 Windows/macOS 한 줄 (샌드박스 밖) | `RESULT: CHECK_OK` / `RESULT: FAIL E00` |
-| 2. 설치 | 1단계 출력의 `AGENT_CMD:` 줄 그대로 — Windows `… powershell -NoProfile -ExecutionPolicy Bypass -File "<TEMP>\llmwiki-bootstrap.ps1" -RepoUrl "<REPO_URL>"`, macOS `bash "/tmp/llmwiki-bootstrap.sh" --repo "<REPO_URL>"` | `RESULT: OK` (0) / `RESULT: DOCTOR_FAIL` (17, 다시 실행 안 함) / `RESULT: FAIL E0n` (10+n, E07만 27) |
+| 2. 설치 | 1단계 출력의 `AGENT_CMD:` 줄 그대로 — Windows `… powershell -NoProfile -ExecutionPolicy Bypass -File "<TEMP>\llmwiki-bootstrap.ps1" -RepoUrl "https://github.com/NateYOO/llmwiki-kit"`, macOS `bash "/tmp/llmwiki-bootstrap.sh" --repo "https://github.com/NateYOO/llmwiki-kit"` | `RESULT: OK` (0) / `RESULT: DOCTOR_FAIL` (17, 다시 실행 안 함) / `RESULT: FAIL E0n` (10+n, E07만 27) |
 
 ### 1-2. 대체 경로
 | 방법 | 명령 |
 |---|---|
 | Download ZIP (표준 수동) | GitHub → Code → Download ZIP → 압축 풀기 → 폴더를 `C:\llmwiki`로 → Codex에서 열고 1-1 문장 |
-| git clone (고급) | `git clone <REPO_URL> llmwiki` |
-| 터미널 한 줄 (macOS) | `curl -LsSf <REPO_URL>/raw/main/setup/install_mac.sh \| bash` |
-| 터미널 한 줄 (Windows) | `irm <REPO_URL>/raw/main/setup/install_windows.ps1 \| iex` |
+| git clone (고급) | `git clone https://github.com/NateYOO/llmwiki-kit llmwiki` |
+| 터미널 한 줄 (macOS) | `curl -LsSf https://github.com/NateYOO/llmwiki-kit/raw/main/setup/install_mac.sh \| bash` |
+| 터미널 한 줄 (Windows) | `irm https://github.com/NateYOO/llmwiki-kit/raw/main/setup/install_windows.ps1 \| iex` |
 | 키트 폴더 안에서 직접 (Windows) | `powershell -NoProfile -ExecutionPolicy Bypass -File setup\bootstrap-windows.ps1` |
 | 키트 폴더 안에서 직접 (macOS) | `bash setup/bootstrap-mac.sh` |
 | 기존 설치 스크립트(uv/venv, 대상 지정) | `bash setup/setup_mac.sh --target ~/my-thesis` · `powershell -NoProfile -ExecutionPolicy Bypass -File setup\setup_windows.ps1 -Target C:\my-thesis` (`--no-uv`/`-NoUv`: 이미 있는 Python 사용) |

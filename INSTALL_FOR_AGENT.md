@@ -6,14 +6,14 @@
 > **에이전트는 이 문서를 따로 받지 않아도 됩니다.** 학생 설치 문장에 첫 명령이 글자 그대로 들어 있고, 그다음 명령은 그 명령의 출력(`AGENT_CMD:` 줄)이 알려 줍니다.
 > 이 문서를 읽어야 할 때의 주소: `{REPO}/raw/main/INSTALL_FOR_AGENT.md` (🔐 인터넷, 사람이 볼 때는 `{REPO}/blob/main/INSTALL_FOR_AGENT.md`).
 
-## 0. 학생 설치 문장 (강사가 `<REPO_URL>`을 실제 주소로 바꿔 배포)
+## 0. 학생 설치 문장 (저장소: https://github.com/NateYOO/llmwiki-kit)
 ````text
-LLM 위키 키트를 이 폴더에 설치해 주세요. 저장소: <REPO_URL>
+LLM 위키 키트를 이 폴더에 설치해 주세요. 저장소: https://github.com/NateYOO/llmwiki-kit
 1) 먼저 저에게 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 말하고,
 2) 제 컴퓨터에 맞는 아래 한 줄을 샌드박스 밖(승인 요청)으로 글자 그대로 실행한 뒤,
 3) 출력 끝의 RESULT: 줄과 AGENT: 줄이 시키는 대로만 하세요. 다른 명령은 만들지 마세요.
-Windows: [Console]::OutputEncoding=[Text.Encoding]::UTF8; iwr -useb <REPO_URL>/raw/main/setup/bootstrap-windows.ps1 -OutFile "$env:TEMP\llmwiki-bootstrap.ps1"; powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\llmwiki-bootstrap.ps1" -CheckOnly -RepoUrl <REPO_URL>
-macOS: curl -fsSL <REPO_URL>/raw/main/setup/bootstrap-mac.sh -o /tmp/llmwiki-bootstrap.sh && bash /tmp/llmwiki-bootstrap.sh --check-only --repo <REPO_URL>
+Windows: [Console]::OutputEncoding=[Text.Encoding]::UTF8; iwr -useb https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstrap-windows.ps1 -OutFile "$env:TEMP\llmwiki-bootstrap.ps1"; powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\llmwiki-bootstrap.ps1" -CheckOnly -RepoUrl https://github.com/NateYOO/llmwiki-kit
+macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstrap-mac.sh -o /tmp/llmwiki-bootstrap.sh && bash /tmp/llmwiki-bootstrap.sh --check-only --repo https://github.com/NateYOO/llmwiki-kit
 ````
 - 이 한 줄이 **받기 + 폴더 점검**을 학생 계정(샌드박스 밖)에서 한 번에 한다. 그래서 샌드박스 사용자가 `%TEMP%`를 못 읽는 문제가 없고, 점검 결과(사용자 폴더·바탕 화면/문서 판정)도 학생 기준이다(QA H32).
 - `[Console]::OutputEncoding=…UTF8`은 안쪽 powershell의 UTF-8 출력을 바깥 셸이 깨지지 않게 읽게 한다(QA H34). 판정은 어차피 ASCII 줄(`RESULT:`)로만 한다.

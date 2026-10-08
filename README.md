@@ -10,12 +10,12 @@
 3\) [승인]
 
 ```text
-LLM 위키 키트를 이 폴더에 설치해 주세요. 저장소: <REPO_URL>
+LLM 위키 키트를 이 폴더에 설치해 주세요. 저장소: https://github.com/NateYOO/llmwiki-kit
 1) 먼저 저에게 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 말하고,
 2) 제 컴퓨터에 맞는 아래 한 줄을 샌드박스 밖(승인 요청)으로 글자 그대로 실행한 뒤,
 3) 출력 끝의 RESULT: 줄과 AGENT: 줄이 시키는 대로만 하세요. 다른 명령은 만들지 마세요.
-Windows: [Console]::OutputEncoding=[Text.Encoding]::UTF8; iwr -useb <REPO_URL>/raw/main/setup/bootstrap-windows.ps1 -OutFile "$env:TEMP\llmwiki-bootstrap.ps1"; powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\llmwiki-bootstrap.ps1" -CheckOnly -RepoUrl <REPO_URL>
-macOS: curl -fsSL <REPO_URL>/raw/main/setup/bootstrap-mac.sh -o /tmp/llmwiki-bootstrap.sh && bash /tmp/llmwiki-bootstrap.sh --check-only --repo <REPO_URL>
+Windows: [Console]::OutputEncoding=[Text.Encoding]::UTF8; iwr -useb https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstrap-windows.ps1 -OutFile "$env:TEMP\llmwiki-bootstrap.ps1"; powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\llmwiki-bootstrap.ps1" -CheckOnly -RepoUrl https://github.com/NateYOO/llmwiki-kit
+macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstrap-mac.sh -o /tmp/llmwiki-bootstrap.sh && bash /tmp/llmwiki-bootstrap.sh --check-only --repo https://github.com/NateYOO/llmwiki-kit
 ```
 
 ## 0. 한눈에: 이 폴더 = 내 작업 폴더
@@ -53,7 +53,7 @@ llmwiki/                        ← ChatGPT 데스크톱 앱(Codex)에서 "이 �
 
 1. **빈 폴더 만들기** — Windows: `C:\llmwiki` · macOS: 홈 폴더의 `llmwiki` (OneDrive·iCloud·문서·바탕 화면 **안은 피하세요**: 동기화가 설치 파일 수천 개와 충돌합니다)
 2. ChatGPT 데스크톱 앱 → Codex → 그 폴더 열기 (모델 Luna, 추론 Medium)
-3. 채팅창에 **맨 위 복사 상자의 설치 문장**을 그대로 붙여 넣기 (상자 오른쪽 위 복사 버튼. 강사가 `<REPO_URL>`을 실제 주소로 바꿔 배포합니다)
+3. 채팅창에 **맨 위 복사 상자의 설치 문장**을 그대로 붙여 넣기 (상자 오른쪽 위 복사 버튼)
 4. 에이전트가 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 하면 **[승인]** 을 누릅니다(보통 2번). Windows 확인 창(화면이 어두워지며 "이 앱이 디바이스를 변경하도록 허용…")은 보통 뜨지 않습니다(Git은 이미 있을 때만 씀). 혹시 뜨면 **[예]**, 창이 안 보이는데 오래 멈춰 있으면 **작업 표시줄에서 깜빡이는 방패 아이콘**을 누르세요.
 5. 5~10분 뒤 `설치 완료 ✅ / 남은 일: …` 이 나오면 끝. **새 채팅**을 열어 2절의 인식 확인을 해 보세요.
 
@@ -66,8 +66,8 @@ llmwiki/                        ← ChatGPT 데스크톱 앱(Codex)에서 "이 �
 | 방법 | 언제 | 하는 법 |
 |---|---|---|
 | **Download ZIP** (표준 수동) | 에이전트 설치가 안 될 때 | GitHub 저장소 → 초록색 **Code** → **Download ZIP** → 압축 풀기 → 풀린 폴더를 `C:\llmwiki`(또는 `~/llmwiki`)로 옮김 → Codex에서 그 폴더를 열고 맨 위 설치 문장을 보냄(이미 키트가 있으면 받기를 건너뛰고 설치만 함) |
-| git clone (고급) | Git을 쓰는 사람 | `git clone <REPO_URL> llmwiki` → 그 폴더에서 맨 위 설치 문장, 또는 아래 터미널 명령 |
-| 터미널 한 줄 | 터미널에 익숙한 사람 | macOS: `curl -LsSf <REPO_URL>/raw/main/setup/install_mac.sh \| bash` · Windows PowerShell: `irm <REPO_URL>/raw/main/setup/install_windows.ps1 \| iex` |
+| git clone (고급) | Git을 쓰는 사람 | `git clone https://github.com/NateYOO/llmwiki-kit llmwiki` → 그 폴더에서 맨 위 설치 문장, 또는 아래 터미널 명령 |
+| 터미널 한 줄 | 터미널에 익숙한 사람 | macOS: `curl -LsSf https://github.com/NateYOO/llmwiki-kit/raw/main/setup/install_mac.sh \| bash` · Windows PowerShell: `irm https://github.com/NateYOO/llmwiki-kit/raw/main/setup/install_windows.ps1 \| iex` |
 | 수동 스크립트 | 키트 폴더 안에서 | Windows: `powershell -NoProfile -ExecutionPolicy Bypass -File setup\bootstrap-windows.ps1` · macOS: `bash setup/bootstrap-mac.sh` |
 
 Windows에는 Git이 기본으로 없으므로 **Download ZIP**이 표준 수동 경로입니다.

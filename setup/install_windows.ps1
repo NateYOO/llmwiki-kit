@@ -1,10 +1,10 @@
 # One-line install (Windows PowerShell):
-#   irm <REPO_URL>/raw/main/setup/install_windows.ps1 | iex
+#   irm https://github.com/NateYOO/llmwiki-kit/raw/main/setup/install_windows.ps1 | iex
 # Existing research folder:
-#   $env:LLMWIKI_TARGET="C:\my-thesis"; irm <REPO_URL>/raw/main/setup/install_windows.ps1 | iex
+#   $env:LLMWIKI_TARGET="C:\my-thesis"; irm https://github.com/NateYOO/llmwiki-kit/raw/main/setup/install_windows.ps1 | iex
 # Downloads the repo ZIP to a temp folder and runs setup_windows.ps1 -Target <folder>. Never overwrites files.
 $ErrorActionPreference = "Stop"
-$RepoUrl = if ($env:LLMWIKI_REPO_URL) { $env:LLMWIKI_REPO_URL } else { "<REPO_URL>" }
+$RepoUrl = if ($env:LLMWIKI_REPO_URL) { $env:LLMWIKI_REPO_URL } else { "https://github.com/NateYOO/llmwiki-kit" }
 $Branch = if ($env:LLMWIKI_BRANCH) { $env:LLMWIKI_BRANCH } else { "main" }
 $Target = if ($env:LLMWIKI_TARGET) { $env:LLMWIKI_TARGET } else { "C:\llmwiki" }
 if ($RepoUrl -like "*<*") { throw "REPO_URL placeholder not replaced. Set `$env:LLMWIKI_REPO_URL='https://github.com/<account>/<repo>' first." }
