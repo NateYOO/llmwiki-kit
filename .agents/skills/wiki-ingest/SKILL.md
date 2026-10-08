@@ -45,7 +45,7 @@ macOS/Linux `./llmwiki`, Windows `.\llmwiki.cmd` 로 바꿔 실행한다.
    - 이 논문의 `## Related Papers` 자동 블록을 읽고, 실제 관계가 보이면 블록 **밖**에 `### 에이전트 해석` 1–3줄(근거 포함). 근거 없으면 쓰지 않는다.
    - 같은 주제의 논문이 2편 이상이면 `wiki/topics/<주제>.md`를 만들거나 덧붙여 두 리뷰를 링크한다.
    - `paper_issues`의 ERROR를 고치고 `llmwiki finish <slug>`를 다시 부른다(log는 완료됐을 때 한 번만 남음). 마지막 줄이 `넣기 완료 ✅ …`이면 끝.
-7. **보고** — `finish`의 마지막 줄, 만든/바꾼 파일, 사용한 그림. `zotero next`였으면 끝에 한 줄: 「다른 논문을 원하면: `$wiki-ingest <제목 일부>` (다음 후보: …)」 — 묻지 않는다.
+7. **보고** — `finish`의 마지막 줄, 만든/바꾼 파일, 사용한 그림. `finish`가 위키 화면(`site/`)도 다시 만들었으니 「브라우저에서 새로고침(F5 / Cmd+R) 하세요」와 이 논문의 관련 논문 수(「관련 논문 n편」 또는 「관련 논문 없음(논문을 더 넣으면 연결이 생겨요)」)를 알려 준다. `zotero next`였으면 끝에 한 줄: 「다른 논문을 원하면: `$wiki-ingest <제목 일부>` (다음 후보: …)」 — 묻지 않는다.
 
 ## 하지 말 것
 - 유료 LLM API 호출, Zotero DB·PDF 수정, `source.md`/`meta.json` 손편집, related 자동 블록 손편집.

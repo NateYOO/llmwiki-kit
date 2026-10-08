@@ -5,10 +5,10 @@
   실행(고정):  powershell -NoProfile -ExecutionPolicy Bypass -File <이 파일> -RepoUrl <저장소 주소>
   점검만:      ... -CheckOnly -RepoUrl <저장소 주소>   (학생 설치 문장의 첫 명령. 끝에 다음 명령을 AGENT_CMD: 줄로 알려 줌)
   에이전트 판정: 마지막 부분의 ASCII 줄 'RESULT: …'(CHECK_OK / OK / DOCTOR_FAIL / FAIL Exx)과 'AGENT: …'만 보면 된다(QA H34).
-  하는 일 (8단계, 다시 실행해도 안전 / 기존 파일은 절대 덮어쓰지 않음):
+  하는 일 (9단계, 다시 실행해도 안전 / 기존 파일은 절대 덮어쓰지 않음):
     0 폴더 점검(비어 있음 · OneDrive/문서/바탕화면 자체가 아님)  1 winget 확인  2 Git(이미 있으면 사용. 설치는 -WithGit일 때만 - UAC를 피하려고, QA H35)
     3 uv + Python 3.12 (관리자 권한 없음)  4 키트 받기(git clone 또는 ZIP) + 병합  5 .venv + 패키지
-    6 UTF-8 설정  7 git init(Git이 있을 때)  8 doctor + 한 줄 요약
+    6 UTF-8 설정  7 git init(Git이 있을 때)  8 doctor + 한 줄 요약  9 샘플 3편 + 위키 화면(site/) 열기
   오류 코드: E00 폴더 / E01 인터넷 / E02 Git(치명 아님) / E03 uv / E04 Python / E05 키트 받기·복사 / E06 패키지 / E07 doctor
   종료 코드: E00~E06 = 10+번호, E07 = 27(17은 DOCTOR_FAIL 전용, QA H47), 성공 0
   PowerShell 5.1과 7 모두 지원. 시스템 설정(실행 정책 등)은 영구 변경하지 않는다.
@@ -35,7 +35,7 @@ $env:PYTHONIOENCODING = 'utf-8'
 try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { $null = $_ }
 
 $OnWindows = ($env:OS -eq 'Windows_NT')
-$TotalSteps = 8
+$TotalSteps = 9
 $Script:LogFile = $null
 $tmpRoot = $null   # 키트 임시 폴더(받기 때 만듦). 오류로 끝나도 지운다(QA H47)
 
@@ -405,10 +405,25 @@ if ([int]$doc.fail -gt 0) {
     Write-Line "AGENT: Do NOT rerun. Read the line '설치 미완료 ❌ / 해결할 것: …' above to the student word for word, then say: '이것을 고친 뒤 같은 설치 문장을 다시 보내 주세요(이미 받은 것은 건너뜁니다).' Then STOP."
     exit 17
 }
+# ------------------------------------------------------------------ 9. 샘플 3편 + 위키 화면 (같은 승인 안에서, 실패해도 설치는 성공)
+Write-Step 9 "샘플 논문 3편 + 위키 화면 만들기 (llmwiki welcome)"
+$old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+$wjson = (& $venvPy -m llmwiki --root $Target welcome --json 2>$null) -join "`n"
+$ErrorActionPreference = $old
+try { $wel = $wjson | ConvertFrom-Json } catch { $wel = $null }
+if ($wel -and -not $wel.error -and $wel.file_url) {
+    if ($wel.sample -eq 'added') { Write-Line "  샘플 논문 3편을 넣었어요(나중에 「샘플 논문 빼 줘」로 뺄 수 있어요)." }
+    Write-Line ("위키 화면: {0}" -f $wel.file_url)
+    if ($wel.opened) { Write-Line "  브라우저로 열었어요. 안 보이면 위 주소를 브라우저 주소창에 붙여넣으세요." } else { Write-Line "  위 주소를 브라우저 주소창에 붙여넣어 여세요." }
+} else {
+    $why = if ($wel) { $wel.error } else { $wjson }
+    Write-Line ("위키 화면: 아직 못 만들었어요(설치는 끝남) - 새 채팅에서 「위키 화면 열어 줘」라고 말하세요. ({0})" -f $why)
+}
+Write-Line ""
 Write-Line "다음: Codex 앱에서 이 폴더로 '새 채팅'을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요."
 Write-Line $doc.summary
 Write-Line "RESULT: OK"
-Write-Line "AGENT: Say to the student, in this order: (1) the line starting with '설치 완료' above; (2) '새 채팅을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요.'; (3) 'Zotero를 켜고 설정 → 고급에서 다른 응용 프로그램과 통신 허용을 켠 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요.' Then STOP."
+Write-Line "AGENT: Say to the student, in this order: (1) the line starting with '설치 완료' above; (2) the line starting with '위키 화면:' above word for word (it has the file:// address of the wiki screen; if it says it opened the browser, add '브라우저에 샘플 논문 3편이 보이면 성공이에요.'); (3) '새 채팅을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요.'; (4) 'Zotero를 켜고 설정 → 고급에서 다른 응용 프로그램과 통신 허용을 켠 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요.' Then STOP."
 # 받은 bootstrap 사본(임시 폴더)은 성공했을 때만 지운다 - 실패 때는 같은 명령으로 다시 실행할 수 있게(QA H37)
 if ($PSCommandPath -and ((Split-Path -Leaf $PSCommandPath) -eq 'llmwiki-bootstrap.ps1') -and ($PSCommandPath -like ([IO.Path]::GetTempPath() + '*'))) {
     Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue

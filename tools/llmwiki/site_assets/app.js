@@ -6,13 +6,14 @@
 
   /* ---------- 알림 ---------- */
   var toastTimer;
-  function toast(msg) {
+  function toast(msg, sub) {
     var t = document.getElementById("toast");
     if (!t) return;
     t.textContent = msg;
+    if (sub) { var s = document.createElement("small"); s.textContent = sub; t.appendChild(s); }
     t.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { t.hidden = true; }, 2600);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 4000);
   }
 
   /* ---------- 복사: clipboard API → execCommand → 선택된 상자 ---------- */
@@ -40,7 +41,7 @@
     } catch (e) { return false; }
   }
   function copyText(text) {
-    var done = function () { toast("복사했어요 — Codex 채팅에 붙여넣으세요"); };
+    var done = function () { toast("복사했어요 — Codex 채팅에 붙여넣으세요", text); };
     var fallback = function () { if (legacyCopy(text)) done(); else showBox(text); };
     try {
       if (navigator.clipboard && window.isSecureContext !== false) {

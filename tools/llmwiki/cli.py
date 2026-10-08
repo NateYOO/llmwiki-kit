@@ -108,8 +108,13 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--append-agents", action="store_true", help="기존 AGENTS.md가 있으면 끝에 'AGENTS.llmwiki.md를 따르라' 안내 블록만 덧붙임")
     s.add_argument("--no-sample", action="store_true", help="examples/sample-wiki 복사 생략")
 
-    s = sub.add_parser("sample", help="복구용 샘플 위키(3편)를 wiki/에 복사 (같은 이름은 건너뜀)")
+    s = sub.add_parser("sample", help="복구용 샘플 위키(3편)를 wiki/에 복사 (같은 이름은 건너뜀) · --remove 로 샘플만 빼기")
     s.add_argument("--overwrite", action="store_true", help="같은 slug가 있어도 덮어씀")
+    s.add_argument("--remove", action="store_true", help="샘플 논문 3편과 샘플 주제 노트만 빼기(내 논문은 그대로) → 목차·관련 링크·위키 화면 다시 만들기")
+
+    s = sub.add_parser("welcome", help="설치 마지막 단계: 위키가 비어 있으면 샘플 3편 넣기 → 위키 화면 만들기 → 브라우저로 열기")
+    s.add_argument("--no-open", action="store_true", help="브라우저를 열지 않음")
+    s.add_argument("--json", action="store_true", help="설치 스크립트용 ASCII JSON")
 
     z = sub.add_parser("zotero", help="Zotero 검색·가져오기 (로컬 API → sqlite 사본 → 외부 CLI)")
     zs = z.add_subparsers(dest="zcmd", metavar="<하위명령>")
@@ -296,6 +301,29 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
         return run(ws, offline=args.offline, as_json=args.json)
 
     ws = _ws(args)
+
+    if args.cmd == "sample" and args.remove:
+        from . import related
+        from .scaffold import remove_sample
+        from .site import try_rebuild
+        from .wikiops import append_log, write_index
+        res = remove_sample(ws.root)
+        related.write(ws, related.compute(ws))
+        write_index(ws)
+        if res["removed"]:
+            append_log(ws, "setup", "샘플 위키 제거", [f"뺌: {', '.join(res['removed'])}"])
+        msg = try_rebuild(ws)
+        print(f"샘플 논문을 뺐어요 ✅ {len([r for r in res['removed'] if r.startswith('papers/')])}편 (내 논문은 그대로)" if res["removed"]
+              else "뺄 샘플 논문이 없어요(이미 빠져 있음).")
+        for k in res["kept"]:
+            print(f"  남김: {k}")
+        if msg:
+            print(f"위키 화면: {msg}")
+        print("다시 넣으려면: llmwiki sample")
+        return 0
+
+    if args.cmd == "welcome":
+        return _welcome(ws, args)
 
     if args.cmd == "sample":
         from .scaffold import restore_sample
@@ -506,6 +534,10 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
                 print(f"  [{i['level']}] {i['code']:<14} {i['path']}  {i['msg']}")
             if res["other_papers_errors"]:
                 print(f"  (참고: 다른 논문의 ERROR {res['other_papers_errors']}개 — llmwiki lint 로 확인)")
+            site_st = next((x for x in res["steps"] if x["step"] == "site"), None)
+            if site_st and not site_st.get("skipped"):
+                from .site import site_dir
+                print(f"위키 화면을 다시 만들었어요 → 브라우저에서 새로고침(F5 / Cmd+R) 하세요 ({(site_dir(ws) / 'index.html').resolve().as_uri()})")
         print(res["result"])
         print(res["last_line"])
         return 0 if res["ok"] else 1
@@ -548,12 +580,11 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
             _print(res)
         else:
             print("\n".join(summary_lines(res)))
-        if args.open and os.environ.get("LLMWIKI_NO_BROWSER") != "1":
-            try:
-                import webbrowser
-                webbrowser.open(res["file_url"])
+        if args.open:
+            from .site import open_in_browser, site_dir
+            if open_in_browser(res["file_url"], site_dir(ws) / "index.html"):
                 print("브라우저로 열었어요. 안 열리면 위 file:// 주소를 브라우저 주소창에 붙여넣으세요.")
-            except Exception:  # noqa: BLE001
+            else:
                 print("브라우저를 자동으로 열지 못했어요. 위 file:// 주소를 브라우저 주소창에 붙여넣으세요.")
         print("RESULT: OK")
         print(f"FILE: {res['file_url']}")
@@ -563,6 +594,41 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
         return _serve(ws, args)
 
     parser.print_help()
+    return 0
+
+
+def _welcome(ws, args) -> int:
+    """설치 마지막 단계(설치 스크립트가 doctor 통과 뒤 같은 승인 안에서 부름). 실패해도 설치를 실패로 만들지 않는다."""
+    from .scaffold import read_sample_marker
+    from .site import build, open_in_browser
+    out = {"sample": "skipped", "papers": len(ws.paper_slugs()), "file_url": "", "index_path": "", "opened": False, "error": ""}
+    try:
+        if not ws.paper_slugs() and not read_sample_marker(ws.root).get("removed"):
+            from . import related
+            from .scaffold import restore_sample
+            from .wikiops import append_log, write_index
+            res = restore_sample(ws.root)
+            if res["copied"]:
+                related.write(ws, related.compute(ws))
+                write_index(ws)
+                append_log(ws, "setup", "샘플 위키(3편) 넣기 — 설치 마지막 단계", [f"복사: {', '.join(res['copied'])}"])
+                out["sample"] = "added"
+        r = build(ws)
+        out.update(papers=r["papers"], file_url=r["file_url"], index_path=str((ws.root / "site" / "index.html").resolve()))
+        if not args.no_open:
+            out["opened"] = open_in_browser(r["file_url"], ws.root / "site" / "index.html")
+    except Exception as e:  # noqa: BLE001
+        out["error"] = f"{type(e).__name__}: {e}"
+    if args.json:
+        print(json.dumps(out, ensure_ascii=True))
+        return 0
+    if out["error"]:
+        print(f"위키 화면을 만들지 못했어요(설치는 끝남): {out['error']} → 새 채팅에서 「위키 화면 열어 줘」")
+        return 0
+    if out["sample"] == "added":
+        print("샘플 논문 3편을 넣었어요(나중에 「샘플 논문 빼 줘」로 뺄 수 있어요).")
+    print(f"위키 화면: {out['file_url']}")
+    print("브라우저로 열었어요." if out["opened"] else "이 주소를 브라우저 주소창에 붙여넣어 여세요.")
     return 0
 
 
@@ -607,12 +673,9 @@ def _serve(ws, args) -> int:
         print(f"(포트 {args.port}는 다른 프로그램이 쓰고 있어서 {res['port']}번으로 열었어요)")
     print(f"주소가 안 열리면 이 파일을 브라우저로 여세요(기본 방법): {file_url}")
     print(f"끄기: llmwiki serve --stop · {restart_tip}")
-    if not args.no_open and os.environ.get("LLMWIKI_NO_BROWSER") != "1":
-        try:
-            import webbrowser
-            webbrowser.open(url)
-        except Exception:  # noqa: BLE001
-            pass
+    if not args.no_open:
+        from .site import open_in_browser
+        open_in_browser(url)
     print("RESULT: OK")
     print(f"URL: {url}")
     return 0

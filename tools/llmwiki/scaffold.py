@@ -137,4 +137,52 @@ def restore_sample(root: Path, overwrite: bool = False) -> dict:
                 shutil.rmtree(dst) if dst.is_dir() else dst.unlink()
             (shutil.copytree(entry, dst, ignore=IGNORE) if entry.is_dir() else shutil.copy2(entry, dst))
             copied.append(f"{sub}/{entry.name}")
+    if copied:
+        _write_sample_marker(root, copied, removed=False)
     return {"copied": copied, "skipped_existing": skipped}
+
+
+SAMPLE_MARKER = Path(".llmwiki") / "sample.json"
+
+
+def _sample_src(root: Path) -> Path:
+    src = root / "examples" / "sample-wiki" / "wiki"
+    return src if src.exists() else KIT_ROOT / "examples" / "sample-wiki" / "wiki"
+
+
+def read_sample_marker(root: Path) -> dict:
+    import json
+    try:
+        return json.loads((root / SAMPLE_MARKER).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _write_sample_marker(root: Path, items: list[str], removed: bool) -> None:
+    import json
+    m = read_sample_marker(root)
+    have = set(m.get("items", [])) | set(items) if not removed else set()
+    m.update({"items": sorted(have), "removed": removed})
+    (root / SAMPLE_MARKER).parent.mkdir(parents=True, exist_ok=True)
+    (root / SAMPLE_MARKER).write_text(json.dumps(m, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def remove_sample(root: Path) -> dict:
+    """샘플 논문·주제만 뺀다. 표지(.llmwiki/sample.json)에 적힌 것 + 샘플과 같은 이름만 대상.
+    샘플 주제 노트를 학생이 고쳤으면(내용이 다르면) 지우지 않고 남긴다. 내 논문은 건드리지 않는다."""
+    src = _sample_src(root)
+    names = {f"{sub}/{e.name}" for sub in ("papers", "topics") if (src / sub).exists() for e in (src / sub).iterdir() if not e.name.startswith(".")}
+    marked = set(read_sample_marker(root).get("items", []))
+    targets = sorted(names & marked) if marked else sorted(names)
+    removed, kept = [], []
+    for rel in targets:
+        dst = root / "wiki" / rel
+        if not dst.exists():
+            continue
+        if rel.startswith("topics/") and dst.is_file() and dst.read_bytes() != (src / rel).read_bytes():
+            kept.append(rel + " (고친 흔적이 있어 남김)")
+            continue
+        shutil.rmtree(dst) if dst.is_dir() else dst.unlink()
+        removed.append(rel)
+    _write_sample_marker(root, [], removed=True)
+    return {"removed": removed, "kept": kept}

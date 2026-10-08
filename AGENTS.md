@@ -45,3 +45,4 @@
 - 「위키 화면 새로 만들어 줘」 → `llmwiki site`, "브라우저 새로고침(F5, 맥 Cmd+R)" 안내.
 - 「이 폴더에서 위키 화면 다시 켜 줘」 → `llmwiki site --open`. `.llmwiki/serve.json`이 있으면 `llmwiki serve`도(승인 창이 뜨면 [승인]) 후 주소 안내.
 - 주소 서버는 컴퓨터 재시작·Codex 종료 때 꺼질 수 있다. 파일로 여는 화면은 그대로 된다.
+- 「샘플 논문 빼 줘」 → `llmwiki sample --remove`(샘플 3편·샘플 주제만, 내 논문은 그대로) 후 새로고침 안내. 다시 넣기는 `llmwiki sample`.

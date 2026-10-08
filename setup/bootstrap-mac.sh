@@ -6,9 +6,9 @@
 #   실행(고정):  bash <이 파일> --repo <저장소 주소>
 #   점검만:      bash <이 파일> --check-only --repo <저장소 주소>   (학생 설치 문장의 첫 명령. 끝에 다음 명령을 AGENT_CMD: 줄로 알려 줌)
 #   에이전트 판정: 마지막 부분의 ASCII 줄 'RESULT: …'(CHECK_OK / OK / DOCTOR_FAIL / FAIL Exx)과 'AGENT: …'만 보면 된다.
-# 하는 일 (8단계, 다시 실행해도 안전 / 기존 파일은 절대 덮어쓰지 않음):
+# 하는 일 (9단계, 다시 실행해도 안전 / 기존 파일은 절대 덮어쓰지 않음):
 #   0 폴더 점검  1 기본 도구(curl·unzip)  2 Git(선택: Xcode 명령어 도구)  3 uv + Python 3.12(관리자 권한 없음)
-#   4 키트 받기(git clone 또는 ZIP) + 병합  5 .venv + 패키지  6 UTF-8  7 git init  8 doctor + 한 줄 요약
+#   4 키트 받기(git clone 또는 ZIP) + 병합  5 .venv + 패키지  6 UTF-8  7 git init  8 doctor + 한 줄 요약  9 샘플 3편 + 위키 화면
 # 오류 코드: E00 폴더 / E01 인터넷 / E02 Git(치명 아님) / E03 uv / E04 Python / E05 키트 / E06 패키지 / E07 doctor
 # 종료 코드: E00~E06 = 10+번호, E07 = 27(17은 DOCTOR_FAIL 전용, QA H47), 성공 0
 set -u
@@ -26,7 +26,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8 LC_ALL="${LC_ALL:-en_US.UTF-8}"
-TOTAL=8; LOG=""
+TOTAL=9; LOG=""
 say()  { echo "$*"; [ -n "$LOG" ] && echo "$*" >> "$LOG" 2>/dev/null; return 0; }
 step() { say ""; say "[$1/$TOTAL] $2   ($(date +%H:%M:%S))"; }
 die()  {
@@ -221,10 +221,28 @@ if [ "${FAILS:-1}" != "0" ]; then  # 종료 17: '다음' 안내는 찍지 않는
   say "AGENT: Do NOT rerun. Read the line '설치 미완료 ❌ / 해결할 것: …' above to the student word for word, then say: '이것을 고친 뒤 같은 설치 문장을 다시 보내 주세요(이미 받은 것은 건너뜁니다).' Then STOP."
   exit 17
 fi
+# ---------------------------------------------------------------- 9. 샘플 3편 + 위키 화면 (같은 실행 안에서, 실패해도 설치는 성공)
+step 9 "샘플 논문 3편 + 위키 화면 만들기 (llmwiki welcome)"
+WJSON="$(PYTHONPATH="$TARGET/tools" LLMWIKI_ROOT="$TARGET" "$VPY" -m llmwiki --root "$TARGET" welcome --json 2>/dev/null)" || true
+printf '%s' "$WJSON" | "$VPY" -c '
+import json, sys
+try:
+    d = json.load(sys.stdin)
+except Exception as e:
+    d = {"error": "welcome 출력 없음: %s" % e}
+if d.get("error") or not d.get("file_url"):
+    print("위키 화면: 아직 못 만들었어요(설치는 끝남) - 새 채팅에서 「위키 화면 열어 줘」라고 말하세요. (%s)" % d.get("error", ""))
+else:
+    if d.get("sample") == "added":
+        print("  샘플 논문 3편을 넣었어요(나중에 「샘플 논문 빼 줘」로 뺄 수 있어요).")
+    print("위키 화면: " + d["file_url"])
+    print("  브라우저로 열었어요. 안 보이면 위 주소를 브라우저 주소창에 붙여넣으세요." if d.get("opened") else "  위 주소를 브라우저 주소창에 붙여넣어 여세요.")
+' 2>/dev/null | while IFS= read -r l; do say "$l"; done
+say ""
 say "다음: Codex 앱에서 이 폴더로 '새 채팅'을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요."
 say "$(printf '%s\n' "$OUT" | tail -1)"
 say "RESULT: OK"
-say "AGENT: Say to the student, in this order: (1) the line starting with '설치 완료' above; (2) '새 채팅을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요.'; (3) 'Zotero를 켜고 설정 → 고급에서 다른 응용 프로그램과 통신 허용을 켠 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요.' Then STOP."
+say "AGENT: Say to the student, in this order: (1) the line starting with '설치 완료' above; (2) the line starting with '위키 화면:' above word for word (it has the file:// address of the wiki screen; if it says it opened the browser, add '브라우저에 샘플 논문 3편이 보이면 성공이에요.'); (3) '새 채팅을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요.'; (4) 'Zotero를 켜고 설정 → 고급에서 다른 응용 프로그램과 통신 허용을 켠 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요.' Then STOP."
 # 받은 bootstrap 사본은 성공했을 때만 지운다(QA H37)
 [ "$(basename "$0")" = "llmwiki-bootstrap.sh" ] && case "$0" in /tmp/*) rm -f "$0" ;; esac
 exit 0

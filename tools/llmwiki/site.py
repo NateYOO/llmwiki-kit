@@ -97,7 +97,7 @@ class Builder:
     # ------------------------------------------------------------ 틀
     def page(self, rel: str, title: str, body: str, *, ask: str, nav: str = "", body_class: str = "") -> None:
         root = self.root_of(rel)
-        navs = [("index.html", "논문 목록", "home"), ("index.html#topics", "주제", "topics"),
+        navs = [("index.html", "논문 목록", "home"), ("network.html", "네트워크", "network"), ("index.html#topics", "주제", "topics"),
                 ("drafts/index.html", "초안·아이디어", "drafts"), ("log.html", "작업 기록", "log")]
         nav_html = "".join(f'<a href="{root}{h}"{" class=\"on\"" if k == nav else ""}>{E(t)}</a>' for h, t, k in navs)
         doc = f"""<!doctype html>
@@ -194,6 +194,9 @@ class Builder:
                 self.clusters = related.clusters(self.ws).get("clusters", [])
             except Exception:  # noqa: BLE001 — 군집은 있으면 좋은 정보
                 self.clusters = []
+        from .sitegraph import build_graph, layout
+        self.G = build_graph(self)
+        self.pos = layout(self.G)
         self.drafts = []
         if self.ws.drafts.exists():
             self.drafts = sorted((f for f in self.ws.drafts.glob("*.md")), key=lambda f: (f.name.lower() == "readme.md", -f.stat().st_mtime))
@@ -262,7 +265,7 @@ class Builder:
 {''.join(cards)}
 </section>
 <section class="cols">
-  <div class="panel" id="topics"><h2>주제</h2><ul class="plain">{topics_html}</ul>{cl_html}</div>
+  <div class="panel" id="topics"><h2>주제</h2><ul class="plain">{topics_html}</ul>{cl_html}<p><a href="network.html">🕸 지식 네트워크 보기 →</a></p></div>
   <div class="panel"><h2>초안·아이디어</h2><ul class="plain">{drafts_html}</ul><p><a href="drafts/index.html">전체 보기 →</a></p></div>
 </section>"""
         self.page(rel, "논문 목록", body, ask="$wiki-query <질문을 여기에> (참고: wiki/index.md)", nav="home", body_class="home")
@@ -290,12 +293,21 @@ class Builder:
         toc_html = "".join(f'<li class="l{lv}"><a href="#{hid}">{E(t)}</a></li>' for lv, hid, t in toc if lv <= 3)
         pages = sorted({int(x) for x in re.findall(re.escape(p.slug) + r"\s*·\s*p\.\s*(\d+)", p.body)})
         pages_html = " ".join(f'<a class="pg" href="source.html#p-{n}">p.{n}</a>' for n in pages) or '<span class="muted">인용한 페이지 없음</span>'
-        rel_rows = []
+        rel_rows, seen = [], set()
         for r in self.related.get(p.slug, []):
-            if (self.ws.papers / r.get("slug", "")).is_dir():
+            if (self.ws.papers / r.get("slug", "")).is_dir() and r["slug"] not in seen:
+                seen.add(r["slug"])
                 rel_rows.append(f'<li><a href="../{E(r["slug"])}/index.html">{E(r.get("title") or r["slug"])}</a>'
                                 f'<span class="muted small"> {E(REL_LABEL.get(r.get("relation"), ""))} · {E(str(r.get("reason", "")))}</span></li>')
-        rel_html = "".join(rel_rows) or '<li class="muted">아직 없음 (논문이 2편 이상이면 자동 계산)</li>'
+        for e in self.G["edges"]:  # 리뷰 안 근거 링크로만 이어진 논문도
+            other = e["b"] if e["a"] == p.slug else e["a"] if e["b"] == p.slug else None
+            if other and other not in seen:
+                seen.add(other)
+                rel_rows.append(f'<li><a href="../{E(other)}/index.html">{E(self.G["papers"][other].title)}</a><span class="muted small"> · 리뷰 안 링크</span></li>')
+        n_rel = len(rel_rows)
+        rel_html = "".join(rel_rows) or '<li class="muted">관련 논문 없음 — 논문을 더 넣으면 연결이 생겨요.</li>'
+        badge = (f'<a class="badge ok" href="#related-papers">🔗 관련 논문 {n_rel}편</a>' if n_rel
+                 else '<span class="badge none">관련 논문 없음(논문을 더 넣으면 연결이 생겨요)</span>')
         figs = sorted((p.dir / "figures").glob("*.png")) if (p.dir / "figures").exists() else []
         strip = "".join(f'<a href="figures/figures.html"><img src="figures/{E(f.name)}" alt="{E(f.stem)}" loading="lazy"></a>' for f in figs[:8])
         tags = "".join(f'<span class="chip">#{E(str(t))}</span>' for t in (fm.get("tags") or []) if str(t) != "paper")
@@ -304,14 +316,14 @@ class Builder:
   <p class="crumb"><a href="../../index.html">논문 목록</a> › {E(str(fm.get('category') or '분류 없음'))}</p>
   <h1>{E(p.title)}</h1>
   <p class="meta">{E(', '.join(map(str, authors)))} · {E(str(fm.get('year') or ''))}{(' · ' + E(str(fm.get('venue')))) if fm.get('venue') else ''}{f' · 종합 {score}/5' if score else ''}</p>
-  <div class="chips">{tags}</div>
-  <p class="links">{' · '.join(links)}</p>
+  <div class="chips">{badge} {tags}</div>
+  <p class="links">{' · '.join(links)} · <a href="../../network.html">네트워크에서 보기</a></p>
   {f'<div class="strip">{strip}</div>' if strip else ''}
 </section>"""
         side = f"""<aside class="side">
   <div class="box"><h4>목차</h4><ul class="toc">{toc_html}</ul></div>
   <div class="box"><h4>원문 페이지 <span class="muted small">(리뷰가 인용한 곳)</span></h4><p class="pages">{pages_html}</p></div>
-  <div class="box"><h4>관련 논문</h4><ul class="plain small">{rel_html}</ul></div>
+  <div class="box"><h4>관련 논문 {f"{n_rel}편" if n_rel else "없음"}</h4><ul class="plain small">{rel_html}</ul></div>
   <div class="box small muted">위키 파일: <code>wiki/papers/{E(p.slug)}/review.md</code></div>
 </aside>"""
         body = head + f'<div class="paper-layout">{side}<article class="md review">{content}</article></div>'
@@ -370,9 +382,51 @@ class Builder:
         for t in self.topics:
             rel = f"topics/{t['stem']}.html"
             content = self.cite_links(convert(t["body"], self.linker(t["file"], rel)), rel)
-            self.page(rel, t["title"], f'<p class="crumb"><a href="../index.html#topics">← 주제</a></p><article class="md">{content}</article>',
+            content += self.topic_members_html(t["stem"])
+            self.page(rel, t["title"], f'<p class="crumb"><a href="../index.html#topics">← 주제</a> · <a href="../network.html">네트워크</a></p><article class="md">{content}</article>',
                       ask=f"$wiki-query <질문을 여기에> (참고: wiki/topics/{t['stem']}.md)", nav="topics")
             self.index.append({"k": "주제", "t": t["title"], "u": rel, "x": _plain(t["body"])[:4000]})
+
+    def topic_members_html(self, stem: str) -> str:
+        from .sitegraph import shared_between_notes
+        G = self.G
+        mem = G["notes"].get(stem, {}).get("papers", [])
+        li = "".join(f'<li><span class="dot" style="background:{G["color"][G["group_of"][s]]}"></span>'
+                     f'<a href="../papers/{E(s)}/index.html">{E(G["papers"][s].title)}</a> <span class="muted small">{E(G["group_of"][s])}</span></li>' for s in mem)
+        sh = shared_between_notes(G, stem)
+        sh_html = "".join(f'<li><a href="../papers/{E(s)}/index.html">{E(G["papers"][s].title)}</a> — 함께 있는 주제: '
+                          + ", ".join(f'<a href="{E(o)}.html">{E(G["notes"][o]["title"])}</a>' for o in os_) + "</li>" for s, os_ in sh)
+        inner = [s2 for s2 in G["edges"] if s2["a"] in mem and s2["b"] in mem]
+        return (f'<h2 id="topic-papers">이 주제의 논문 ({len(mem)}편)</h2><ul class="plain">{li or "<li class=muted>링크된 논문 없음</li>"}</ul>'
+                f'<h2 id="topic-shared">다른 주제와 겹치는 논문</h2><ul class="plain">{sh_html or "<li class=muted>없음 — 다른 주제 노트와 겹치는 논문이 아직 없어요.</li>"}</ul>'
+                f'<p class="muted small">이 주제 안의 연결 {len(inner)}개 · <a href="../network.html">지식 네트워크에서 보기</a></p>')
+
+    def build_network(self) -> None:
+        from .sitegraph import cross_links, svg
+        G = self.G
+        rel = "network.html"
+        legend = "".join(f'<li><span class="dot" style="background:{G["color"][g]}"></span>{E(g)} <span class="muted">({len(G["groups"][g])}편)</span></li>' for g in G["gnames"])
+        graph = svg(G, self.pos, lambda s: f"papers/{s}/index.html") if self.pos else '<p class="empty">아직 논문이 없어요.</p>'
+        groups_html = "".join(
+            f'<div class="box"><h4><span class="dot" style="background:{G["color"][g]}"></span>{E(g)}</h4><ul class="plain small">'
+            + "".join(f'<li><a href="papers/{E(s)}/index.html">{E(G["papers"][s].title)}</a></li>' for s in sorted(G["groups"][g])) + "</ul></div>"
+            for g in G["gnames"])
+        cl = cross_links(G)
+        cross_html = "".join(f'<li><b>{E(x["a"])}</b> ↔ <b>{E(x["b"])}</b> — 연결 {len(x["edges"])}개: '
+                             + ", ".join(f'<a href="papers/{E(e["a"])}/index.html">{E(G["papers"][e["a"]].title[:40])}</a> ↔ '
+                                         f'<a href="papers/{E(e["b"])}/index.html">{E(G["papers"][e["b"]].title[:40])}</a>' for e in x["edges"][:4]) + "</li>" for x in cl)
+        notes_html = "".join(f'<li><a href="topics/{E(k)}.html">{E(v["title"])}</a> <span class="muted small">논문 {len(v["papers"])}편</span></li>' for k, v in G["notes"].items())
+        body = f"""<section class="hero"><h1>지식 네트워크</h1>
+<p>점 하나가 논문 한 편이에요. <b>색</b>은 주제(분류), <b>선 굵기</b>는 얼마나 관련 있는지(어휘 유사도), 진한 선은 리뷰에 근거와 함께 이어 둔 연결이에요. 점을 누르면 그 논문 페이지로 가요.</p></section>
+<div class="net-wrap"><div class="net-box">{graph}</div>
+<aside class="box legend"><h4>주제(분류)</h4><ul class="plain">{legend}</ul>
+<p class="muted small">논문 {len(G["papers"])}편 · 연결 {len(G["edges"])}개<br>선이 굵을수록 더 관련 있음<br>점이 클수록 연결이 많음</p></aside></div>
+<section class="cols">
+<div class="panel"><h2>주제 사이 연결</h2><ul class="plain">{cross_html or '<li class="muted">아직 주제 사이 연결이 없어요.</li>'}</ul>
+<h3>주제 노트</h3><ul class="plain">{notes_html or '<li class="muted">아직 주제 노트가 없어요.</li>'}</ul></div>
+<div class="panel"><h2>주제별 논문</h2><div class="stack">{groups_html}</div></div>
+</section>"""
+        self.page(rel, "지식 네트워크", body, ask="$wiki-query 내 위키 논문들은 서로 어떻게 연결돼 있어? 연결이 약한 주제 사이에서 연구 아이디어를 찾아 줘", nav="network", body_class="network")
 
     def build_drafts(self) -> None:
         rows = []
@@ -427,6 +481,7 @@ class Builder:
         self.build_topics()
         self.build_drafts()
         self.build_log()
+        self.build_network()
         self.build_home()
         self.assets()
         removed = self.prune()
@@ -450,8 +505,28 @@ def build(ws: Workspace) -> dict[str, Any]:
 def summary_lines(res: dict[str, Any]) -> list[str]:
     return [f"위키 화면 파일을 만들었어요 ✅ 논문 {res['papers']}편 · 주제 {res['topics']}개 · 초안 {res['drafts']}개 · 검색 항목 {res['search_items']}개",
             f"열기: 이 파일을 브라우저로 여세요 → {res['file_url']}",
-            "이미 열어 둔 화면이면 브라우저 새로고침(F5, 맥은 Cmd+R)을 누르세요.",
+            "이미 열어 둔 화면이면 브라우저에서 새로고침(F5 / Cmd+R) 하세요.",
             "(선택) 주소로 보기: llmwiki serve → http://127.0.0.1:8765/"]
+
+
+def open_in_browser(url: str, path: Path | None = None) -> bool:
+    """기본 브라우저로 열기. LLMWIKI_NO_BROWSER=1 이거나 화면 없는 Linux면 열지 않는다(터미널용 브라우저가 멈추는 일 방지)."""
+    import subprocess
+    import sys
+    if os.environ.get("LLMWIKI_NO_BROWSER") == "1":
+        return False
+    try:
+        if os.name == "nt":
+            os.startfile(str(path) if path else url)  # type: ignore[attr-defined]  # noqa: S606
+            return True
+        if sys.platform == "darwin":
+            return subprocess.run(["open", str(path) if path else url], capture_output=True, timeout=15).returncode == 0
+        if not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+            return False
+        import webbrowser
+        return bool(webbrowser.open(url))
+    except Exception:  # noqa: BLE001
+        return False
 
 
 def try_rebuild(ws: Workspace, only_if_exists: bool = True) -> str:
@@ -460,6 +535,6 @@ def try_rebuild(ws: Workspace, only_if_exists: bool = True) -> str:
         return ""
     try:
         r = build(ws)
-        return f"site/ 갱신 (논문 {r['papers']}편)"
+        return f"site/ 갱신 (논문 {r['papers']}편) → 브라우저에서 새로고침(F5 / Cmd+R) 하세요"
     except Exception as e:  # noqa: BLE001
         return f"화면 갱신 실패(무시해도 됨): {type(e).__name__}: {e}"
