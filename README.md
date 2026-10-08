@@ -4,6 +4,19 @@
 > 원작: [이제현 박사님 · Paper Curation](https://github.com/jehyunlee/paper-curation) · 위키 구조: [Andrej Karpathy · LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
 > 이 키트는 두 아이디어(리뷰 형식, raw→wiki→schema 3층 구조)를 바탕으로 **새로 구현**했습니다. 원작의 코드는 한 줄도 복사하지 않았습니다(Paper Curation 저장소에는 라이선스가 없어 형식만 참고했습니다).
 
+1) 오른쪽 위 복사 버튼
+2) Codex 앱 새 채팅에 붙여넣기
+3) [승인]
+
+```text
+LLM 위키 키트를 이 폴더에 설치해 주세요. 저장소: <REPO_URL>
+1) 먼저 저에게 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 말하고,
+2) 제 컴퓨터에 맞는 아래 한 줄을 샌드박스 밖(승인 요청)으로 글자 그대로 실행한 뒤,
+3) 출력 끝의 RESULT: 줄과 AGENT: 줄이 시키는 대로만 하세요. 다른 명령은 만들지 마세요.
+Windows: [Console]::OutputEncoding=[Text.Encoding]::UTF8; iwr -useb <REPO_URL>/raw/main/setup/bootstrap-windows.ps1 -OutFile "$env:TEMP\llmwiki-bootstrap.ps1"; powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\llmwiki-bootstrap.ps1" -CheckOnly -RepoUrl <REPO_URL>
+macOS: curl -fsSL <REPO_URL>/raw/main/setup/bootstrap-mac.sh -o /tmp/llmwiki-bootstrap.sh && bash /tmp/llmwiki-bootstrap.sh --check-only --repo <REPO_URL>
+```
+
 ## 0. 한눈에: 이 폴더 = 내 작업 폴더
 
 ```
@@ -39,18 +52,10 @@ llmwiki/                        ← ChatGPT 데스크톱 앱(Codex)에서 "이 �
 
 1. **빈 폴더 만들기** — Windows: `C:\llmwiki` · macOS: 홈 폴더의 `llmwiki` (OneDrive·iCloud·문서·바탕 화면 **안은 피하세요**: 동기화가 설치 파일 수천 개와 충돌합니다)
 2. ChatGPT 데스크톱 앱 → Codex → 그 폴더 열기 (모델 Luna, 추론 Medium)
-3. 채팅창에 아래 **설치 문장**을 그대로 붙여 넣기 (강사가 `<REPO_URL>`을 실제 주소로 바꿔 나눠 줍니다)
+3. 채팅창에 **맨 위 복사 상자의 설치 문장**을 그대로 붙여 넣기 (상자 오른쪽 위 복사 버튼. 강사가 `<REPO_URL>`을 실제 주소로 바꿔 배포합니다)
 4. 에이전트가 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 하면 **[승인]** 을 누릅니다(보통 2번). Windows에서 화면이 어두워지며 "이 앱이 디바이스를 변경하도록 허용…" 창이 뜨면 **[예]** (Git 설치, 거절해도 설치는 계속됨). 창이 안 보이는데 오래 멈춰 있으면 **작업 표시줄에서 깜빡이는 방패 아이콘**을 누르세요.
 5. 5~10분 뒤 `설치 완료 ✅ / 남은 일: …` 이 나오면 끝. **새 채팅**을 열어 2절의 인식 확인을 해 보세요.
 
-```text
-LLM 위키 키트를 이 폴더에 설치해 주세요. 저장소: <REPO_URL>
-1) 먼저 저에게 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 말하고,
-2) 제 컴퓨터에 맞는 아래 한 줄을 샌드박스 밖(승인 요청)으로 글자 그대로 실행한 뒤,
-3) 출력 끝의 RESULT: 줄과 AGENT: 줄이 시키는 대로만 하세요. 다른 명령은 만들지 마세요.
-Windows: [Console]::OutputEncoding=[Text.Encoding]::UTF8; iwr -useb <REPO_URL>/raw/main/setup/bootstrap-windows.ps1 -OutFile "$env:TEMP\llmwiki-bootstrap.ps1"; powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\llmwiki-bootstrap.ps1" -CheckOnly -RepoUrl <REPO_URL>
-macOS: curl -fsSL <REPO_URL>/raw/main/setup/bootstrap-mac.sh -o /tmp/llmwiki-bootstrap.sh && bash /tmp/llmwiki-bootstrap.sh --check-only --repo <REPO_URL>
-```
 - 설치 문장에 첫 명령(받기 + 폴더 점검)이 글자 그대로 들어 있어 에이전트가 따로 판단할 것이 없습니다. 다음 명령은 그 명령의 출력이 알려 줍니다(`AGENT_CMD:` 줄). 절차의 원본은 [INSTALL_FOR_AGENT.md](INSTALL_FOR_AGENT.md)입니다.
 
 에이전트가 하는 일(학생은 승인만): 받기 + 폴더 점검 → (Windows) winget 확인·Git 설치(선택) → **uv로 Python 3.12 설치(관리자 권한 없음, Microsoft Store python 별칭을 쓰지 않음)** → 키트 받기(Git이 없으면 ZIP) → `.venv`에 pymupdf·pyyaml·pyzotero 설치 → UTF-8 설정 → `llmwiki doctor`.
@@ -59,8 +64,8 @@ macOS: curl -fsSL <REPO_URL>/raw/main/setup/bootstrap-mac.sh -o /tmp/llmwiki-boo
 ### 1-1. 다른 설치 방법
 | 방법 | 언제 | 하는 법 |
 |---|---|---|
-| **Download ZIP** (표준 수동) | 에이전트 설치가 안 될 때 | GitHub 저장소 → 초록색 **Code** → **Download ZIP** → 압축 풀기 → 풀린 폴더를 `C:\llmwiki`(또는 `~/llmwiki`)로 옮김 → Codex에서 그 폴더를 열고 1절의 같은 문장을 보냄(이미 키트가 있으면 받기를 건너뛰고 설치만 함) |
-| git clone (고급) | Git을 쓰는 사람 | `git clone <REPO_URL> llmwiki` → 그 폴더에서 1절 문장, 또는 아래 터미널 명령 |
+| **Download ZIP** (표준 수동) | 에이전트 설치가 안 될 때 | GitHub 저장소 → 초록색 **Code** → **Download ZIP** → 압축 풀기 → 풀린 폴더를 `C:\llmwiki`(또는 `~/llmwiki`)로 옮김 → Codex에서 그 폴더를 열고 맨 위 설치 문장을 보냄(이미 키트가 있으면 받기를 건너뛰고 설치만 함) |
+| git clone (고급) | Git을 쓰는 사람 | `git clone <REPO_URL> llmwiki` → 그 폴더에서 맨 위 설치 문장, 또는 아래 터미널 명령 |
 | 터미널 한 줄 | 터미널에 익숙한 사람 | macOS: `curl -LsSf <REPO_URL>/raw/main/setup/install_mac.sh \| bash` · Windows PowerShell: `irm <REPO_URL>/raw/main/setup/install_windows.ps1 \| iex` |
 | 수동 스크립트 | 키트 폴더 안에서 | Windows: `powershell -NoProfile -ExecutionPolicy Bypass -File setup\bootstrap-windows.ps1` · macOS: `bash setup/bootstrap-mac.sh` |
 
