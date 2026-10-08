@@ -89,6 +89,10 @@ def find_workspace(start: str | os.PathLike | None = None) -> Workspace:
     )
 
 
+class UserError(Exception):
+    """학생 입력 문제(없는 이름·잘못된 값). CLI가 Traceback 없이 '[오류] …' 한 덩어리로 보여 준다."""
+
+
 DEFAULT_CONFIG: dict[str, Any] = {
     "zotero": {
         "practice_collection": "llmwiki-practice",

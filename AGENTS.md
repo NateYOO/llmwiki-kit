@@ -21,12 +21,12 @@
 
 ## 3. CLI
 - macOS/Linux `./llmwiki <명령>` · Windows `.\llmwiki.cmd <명령>` (문서의 `llmwiki`를 이렇게 바꿔 실행).
-- 명령: doctor · zotero search|get|import|collections|status · extract · related [--write|<slug>] · hubs · clusters · search · find · figures · sections · index · log · lint · sample · init. 자세한 옵션은 `--help`.
-- 인터넷이 막히면 `--offline`. `zotero search` 키워드는 **영어로 번역**해서 넣는다.
+- 명령: doctor · zotero next|search|get|import|collections|status · extract · finish <slug> · related [--write|<slug>] · hubs · clusters · search · find · figures · sections · index · log · lint · sample · init. 자세한 옵션은 `--help`.
+- 인터넷이 막히면 `--offline`. `zotero search` 키워드는 **영어로 번역**해서 넣는다. 컬렉션 기본값은 `llmwiki.yaml`의 `practice_collection`.
 
 ## 4. 쓰기 규칙
 - 한국어로 쓰되 기술 용어·모델명·통계량은 원어 그대로.
-- 사실 주장마다 근거 꼬리표 `[근거: <slug> · p.N]`(source.md의 `<!-- p.N -->`) 또는 `[근거: <slug> · 섹션]`. 확인한 수치만 쓴다. 근거 없으면 "위키에 근거 없음", 추측은 `(가설)`/`(제안)`.
+- 사실 주장마다 근거 꼬리표 `[근거: <slug> · p.N]`(source.md의 `<!-- p.N -->`) 또는 `[근거: <slug> · 섹션]`. 확인한 수치만 쓴다. 근거 없으면 "위키에 근거 없음", 추측은 `(가설)`.
 - 원문 통째 복사 금지(직접 인용은 2문장 이하). 링크는 마크다운 상대 경로만(`[[…]]` 금지).
 - 위키·drafts를 바꾼 뒤: `llmwiki index` → `llmwiki log <ingest|query|lint|draft|synthesize> "제목" --note "파일"`.
 

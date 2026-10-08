@@ -38,11 +38,18 @@ def _clean(text: str) -> str:
 
 
 def extract(ws: Workspace, names: list[str], slugs: list[str] | None = None, category: str = "") -> list[dict[str, Any]]:
+    if not names:
+        raise SystemExit(f"섹션 이름을 적어 주세요. 예: --name limitation,gap  (가능: {', '.join(SECTION_ALIASES)})")
     bad = [n for n in names if n not in SECTION_ALIASES]
     if bad:
         raise SystemExit(f"알 수 없는 섹션: {bad}. 가능: {', '.join(SECTION_ALIASES)}")
+    papers = load_papers(ws)
+    if slugs:
+        unknown = [x for x in slugs if x not in {p.slug for p in papers}]
+        if unknown:
+            raise SystemExit(f"논문 slug를 찾지 못했습니다: {', '.join(unknown)} (wiki/papers/ 아래 폴더 이름, `llmwiki index`로 목록 확인)")
     rows = []
-    for p in load_papers(ws):
+    for p in papers:
         if not p.review.exists():
             continue
         if slugs and p.slug not in slugs:

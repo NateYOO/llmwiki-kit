@@ -2,64 +2,56 @@
 
 > 이제현 박사님의 Paper Curation(https://github.com/jehyunlee/paper-curation) 아이디어를 바탕으로 만든 키트입니다. 감사드립니다. (코드 복사 없음)
 
-> 이 문서는 **AI 에이전트(Codex)** 가 읽고 그대로 실행하는 설치 절차입니다. 사람은 승인 창에서 [승인]만 누르면 됩니다.
-> 학생이 보낸 문장 예: `<REPO_URL> 의 INSTALL_FOR_AGENT.md 를 그대로 따라 이 폴더에 설치해 주세요.`
+> 이 문서는 **AI 에이전트(Codex)** 가 따르는 설치 절차의 원본입니다. 사람은 승인 창에서 [승인]만 누르면 됩니다.
+> **에이전트는 이 문서를 따로 받지 않아도 됩니다.** 학생 설치 문장에 첫 명령이 글자 그대로 들어 있고, 그다음 명령은 그 명령의 출력(`AGENT_CMD:` 줄)이 알려 줍니다.
+> 이 문서를 읽어야 할 때의 주소: `{REPO}/raw/main/INSTALL_FOR_AGENT.md` (🔐 인터넷, 사람이 볼 때는 `{REPO}/blob/main/INSTALL_FOR_AGENT.md`).
+
+## 0. 학생 설치 문장 (강사가 `<REPO_URL>`을 실제 주소로 바꿔 배포)
+````text
+LLM 위키 키트를 이 폴더에 설치해 주세요. 저장소: <REPO_URL>
+1) 먼저 저에게 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 말하고,
+2) 제 컴퓨터에 맞는 아래 한 줄을 샌드박스 밖(승인 요청)으로 글자 그대로 실행한 뒤,
+3) 출력 끝의 RESULT: 줄과 AGENT: 줄이 시키는 대로만 하세요. 다른 명령은 만들지 마세요.
+Windows: [Console]::OutputEncoding=[Text.Encoding]::UTF8; iwr -useb <REPO_URL>/raw/main/setup/bootstrap-windows.ps1 -OutFile "$env:TEMP\llmwiki-bootstrap.ps1"; powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\llmwiki-bootstrap.ps1" -CheckOnly -RepoUrl <REPO_URL>
+macOS: curl -fsSL <REPO_URL>/raw/main/setup/bootstrap-mac.sh -o /tmp/llmwiki-bootstrap.sh && bash /tmp/llmwiki-bootstrap.sh --check-only --repo <REPO_URL>
+````
+- 이 한 줄이 **받기 + 폴더 점검**을 학생 계정(샌드박스 밖)에서 한 번에 한다. 그래서 샌드박스 사용자가 `%TEMP%`를 못 읽는 문제가 없고, 점검 결과(사용자 폴더·바탕 화면/문서 판정)도 학생 기준이다(QA H32).
+- `[Console]::OutputEncoding=…UTF8`은 안쪽 powershell의 UTF-8 출력을 바깥 셸이 깨지지 않게 읽게 한다(QA H34). 판정은 어차피 ASCII 줄(`RESULT:`)로만 한다.
 
 ## 규칙 (반드시 지킬 것)
-1. 아래 명령을 **글자 그대로** 실행한다. 바꾸는 곳은 `{REPO}` 하나뿐이다. 학생이 준 저장소 주소를 넣되, 끝의 `/`와 `.git`은 뺀다(예: `https://github.com/abc/llmwiki-starter-kit`).
-2. 🔐 표시가 있는 명령은 인터넷이 필요하다. 실행하기 **직전에** 학생에게 정확히 이렇게 말한다:
-   **"곧 승인 창이 뜹니다. [승인]을 누르세요"**
-   그리고 처음부터 샌드박스 밖 실행(승인 요청, escalated)으로 실행한다. 이유 문구: `설치 파일 받기`.
-3. 시간 제한을 지정할 수 있으면 **1200000ms(20분)** 로 지정한다. 2단계는 5~10분 걸린다. 출력이 멈춘 것처럼 보여도 끝날 때까지 기다린다.
-4. 명령이 실패하면 **한 번만** 똑같이 다시 실행한다. 같은 오류가 또 나면 멈추고 학생에게 말한다:
-   **"설치가 멈췄습니다. 오류 코드 ○○ — 손을 들어 이 화면을 보여 주세요."** (○○ = 출력의 `[E..]` 코드. 없으면 종료 코드)
-   그리고 출력의 마지막 20줄을 고치지 말고 그대로 붙인다.
+1. 명령은 **글자 그대로** 실행한다. 1단계는 학생 문장의 명령, 2단계는 출력의 `AGENT_CMD:` 줄 그대로. 새 명령을 만들지 않는다.
+2. 🔐 명령(1단계·2단계)은 실행 **직전에** 학생에게 말할 문장을 먼저 말한다(1단계: "곧 승인 창이 뜹니다. [승인]을 누르세요", 2단계: 출력의 `AGENT_SAY:` 줄). 처음부터 샌드박스 밖(승인 요청, escalated)으로, 이유 문구 `설치 파일 받기`.
+3. 시간 제한을 지정할 수 있으면 **1200000ms(20분)**. 2단계는 5~10분 걸린다. 멈춘 것처럼 보여도 끝날 때까지 기다린다.
+4. 분기는 **`RESULT:` 줄로만** 한다(아래 표). 한글 문구가 깨져 보여도 `RESULT:`·`AGENT:` 줄은 ASCII라 읽을 수 있다.
 5. 하지 말 것: 새 스크립트 작성, 다른 프로그램 설치, `Set-ExecutionPolicy` 같은 시스템 설정 변경, 학생 파일 이동·삭제, 이 문서에 없는 명령 실행.
    `Access denied`·`UnauthorizedAccess`·받은 파일이 사라짐이면 Windows 보안 → **보호 기록**을 학생에게 확인해 달라고 하고 멈춘다. 실시간 보호 끄기·제외 추가·제어된 폴더 액세스 끄기는 **제안하지 않는다**.
-6. 학생 컴퓨터가 Windows이면 **W절**, macOS이면 **M절**만 따른다.
+6. 1단계 명령 자체가 실패해 `RESULT:` 줄이 없으면(인터넷·주소 문제): 한 번만 다시 실행 → 또 실패하면 "설치가 멈췄습니다. 오류 코드 E01 — 손을 들어 이 화면을 보여 주세요." + 출력 마지막 20줄을 붙이고 멈춘다.
 
-## W. Windows (PowerShell)
+## 단계
+| 단계 | 실행 | 학생에게 먼저 말할 것 |
+|---|---|---|
+| 1. 받기 + 폴더 점검 🔐 | 학생 문장의 Windows/macOS 한 줄 | "곧 승인 창이 뜹니다. [승인]을 누르세요" |
+| 2. 설치 🔐 | 1단계 출력의 `AGENT_CMD:` 줄 그대로 (Windows 예: `[Console]::OutputEncoding=[Text.Encoding]::UTF8; powershell -NoProfile -ExecutionPolicy Bypass -File "<TEMP>\llmwiki-bootstrap.ps1" -RepoUrl "{REPO}"`, macOS 예: `bash "/tmp/llmwiki-bootstrap.sh" --repo "{REPO}"`) | `AGENT_SAY:` 줄 그대로 — 아래 참고 |
+| 3. 마무리 | 없음 | `RESULT: OK` 뒤의 `AGENT:` 줄 그대로 (아래 W2) |
 
-**W0. 폴더 점검** 🔐
-```powershell
-Invoke-WebRequest -UseBasicParsing -Uri "{REPO}/raw/main/setup/bootstrap-windows.ps1" -OutFile "$env:TEMP\llmwiki-bootstrap.ps1"
-```
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\llmwiki-bootstrap.ps1" -CheckOnly
-```
-- 마지막 줄이 `CHECK OK`로 시작하면 → W1로.
-- `[E00]`이 나오면 → 출력의 `해결:` 줄을 학생에게 그대로 읽어 주고 **멈춘다**. (빈 폴더가 아님 / OneDrive 안 / 문서·바탕 화면 자체를 엶 → 권장 폴더 `C:\llmwiki`)
-- 첫 명령이 실패하면(인터넷·주소 문제) → 규칙 4.
+2단계 직전 문장(`AGENT_SAY:`, Windows): **"설치를 시작합니다(5~10분, 창을 닫지 마세요). 곧 승인 창이 뜹니다. [승인]을 누르세요. 설치 중에 화면이 어두워지며 'Windows 확인 창'이 뜨면 [예]를 누르세요. 아무 창도 안 보이는데 오래 멈춰 있으면 화면 아래 작업 표시줄에서 깜빡이는 방패 아이콘을 눌러 주세요."**
+(명령이 도는 동안에는 에이전트가 말할 수 없으므로 UAC 안내는 **미리** 한다. Git 설치의 UAC는 작업 표시줄에서 깜빡이기만 할 수 있다 — QA H35. 거절해도 E02로 계속되고 ZIP으로 받는다.)
+macOS: **"설치를 시작합니다(5~10분, 창을 닫지 마세요). 곧 승인 창이 뜹니다. [승인]을 누르세요. '명령어 도구 설치' 창이 뜨면 [설치]를 눌러도, [나중에]를 눌러도 됩니다(설치는 그대로 계속됩니다)."**
 
-**W1. 설치** 🔐 (5~10분. 학생에게 먼저 "5~10분 걸립니다. 창을 닫지 마세요"라고 말한다.)
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\llmwiki-bootstrap.ps1" -RepoUrl "{REPO}"
-```
-- 중간에 Windows의 "이 앱이 디바이스를 변경하도록 허용하시겠어요?" 창이 뜰 수 있다(Git 설치). 학생에게 "[예]를 누르세요"라고 말한다. 거절해도 설치는 계속된다(Git은 선택).
-- 마지막 줄이 `설치 완료 ✅`로 시작하면 → W2로.
-- 마지막 줄이 `설치 중단 ❌ / 오류 코드 E..`이면 → 규칙 4. (다시 실행해도 안전하다. 이미 받은 파일은 보존된다.)
+## RESULT 줄에 따른 행동
+| `RESULT:` | 종료 코드 | 에이전트 행동 |
+|---|---|---|
+| `CHECK_OK` | 0 | 2단계로(`AGENT_SAY:` 말하기 → `AGENT_CMD:` 실행) |
+| `OK` | 0 | W2 마무리 세 문장을 말하고 끝 |
+| `DOCTOR_FAIL` | 17 | **다시 실행하지 않는다.** 위의 `설치 미완료 ❌ / 해결할 것: …` 줄을 그대로 읽어 주고 "이것을 고친 뒤 같은 설치 문장을 다시 보내 주세요(이미 받은 것은 건너뜁니다)."라고 말한 뒤 멈춘다(QA H33) |
+| `FAIL E00` / `FAIL E05` | 10 / 15 | `해결:` 줄을 그대로 읽어 주고 멈춘다(다시 실행해도 같은 결과) |
+| `FAIL E01`~`E07` (그 밖) | 10+n | 같은 명령을 **한 번만** 다시 → 또 실패하면 "설치가 멈췄습니다. 오류 코드 E0n — 손을 들어 이 화면을 보여 주세요." + 마지막 20줄, 멈춤 |
 
-**W2. 마무리** — 학생에게 아래 세 줄을 그대로 말하고 끝낸다.
-1. 출력의 마지막 줄(`설치 완료 ✅ / 남은 일: …`)을 그대로.
-2. "Codex 앱에서 이 폴더로 **새 채팅**을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내 보세요."
-3. 남은 일에 Zotero가 있으면: "Zotero를 켜고 설정 → 고급 → '이 컴퓨터의 다른 응용 프로그램이 Zotero와 통신하도록 허용'을 켠 뒤, 새 채팅에서 `.\llmwiki.cmd doctor` 를 실행해 달라고 하세요."
-
-## M. macOS (zsh/bash)
-
-**M0. 폴더 점검** 🔐
-```bash
-curl -fsSL "{REPO}/raw/main/setup/bootstrap-mac.sh" -o /tmp/llmwiki-bootstrap.sh && bash /tmp/llmwiki-bootstrap.sh --check-only
-```
-- 마지막 줄이 `CHECK OK`로 시작하면 → M1로. `[E00]`이면 `해결:` 줄을 그대로 읽어 주고 멈춘다(권장 폴더 `~/llmwiki`).
-
-**M1. 설치** 🔐 (5~10분. "5~10분 걸립니다. 창을 닫지 마세요"라고 먼저 말한다.)
-```bash
-bash /tmp/llmwiki-bootstrap.sh --repo "{REPO}"
-```
-- "명령어 개발자 도구를 설치하겠습니까?" 창이 뜨면 학생에게 "[설치]를 누르세요. 기다리지 않아도 됩니다"라고 말한다(Git용, 선택). 설치는 그대로 계속된다.
-- 마지막 줄 `설치 완료 ✅` → M2. `설치 중단 ❌ / 오류 코드 E..` → 규칙 4.
-
-**M2. 마무리** — W2와 같다. 단, doctor 명령은 `./llmwiki doctor`.
+**W2. 마무리 (RESULT: OK)** — 세 문장을 순서대로 말하고 끝낸다.
+1. 출력의 `설치 완료 ✅ / 남은 일: …` 줄 그대로.
+2. "**새 채팅**을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요."
+3. "Zotero를 켜고 설정 → 고급에서 다른 응용 프로그램과 통신 허용을 켠 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요."
+   (새 채팅의 doctor는 샌드박스 안이면 인터넷·127.0.0.1 접속이 막혀 거짓 WARN이 날 수 있다. `--offline`은 arXiv·Crossref 점검을 빼고, 승인 요청(샌드박스 밖)은 Zotero 로컬 API 접속을 보장한다 — QA H36.)
 
 ## 오류 코드 (bootstrap 출력의 `[E..]`, 종료 코드 = 10 + 번호)
 | 코드 | 뜻 | 학생/강사 조치 |
@@ -69,9 +61,10 @@ bash /tmp/llmwiki-bootstrap.sh --repo "{REPO}"
 | E02 | Git 설치 실패 | **치명 아님**(ZIP으로 계속됨) |
 | E03 | uv 설치 실패 | 자동으로 winget Python으로 대체 시도 |
 | E04 | Python/가상환경 실패 | 같은 문장 다시 → 반복되면 강사 |
-| E05 | 키트 받기·복사 실패(주소 오류, 백신/제어된 폴더 액세스) | 저장소 주소 확인, `C:\llmwiki` 사용 |
+| E05 | 키트 받기·복사 실패(주소 오류, 백신/제어된 폴더 액세스) | 저장소 주소 확인, `C:\llmwiki` 사용, 보호 기록 확인 |
 | E06 | 패키지 설치 실패 | 연결 확인 후 다시 |
 | E07 | doctor 실행 실패 | 강사 |
-| 17 | 설치는 됐지만 doctor FAIL 있음 | 마지막 줄의 '해결할 것' 확인 |
+| 17 (`DOCTOR_FAIL`) | 설치는 됐지만 doctor FAIL 있음 | '해결할 것'을 고치고 같은 문장 다시(받은 것은 건너뜀) |
 
+> 참고: 설치는 사용자 환경 변수 `PYTHONUTF8=1`을 한 번 설정한다(한글 출력용, 관리자 권한 불필요). 임시 파일(`%TEMP%\llmwiki-bootstrap.ps1`, `/tmp/llmwiki-bootstrap.sh`)은 성공하면 지운다(실패 때는 다시 실행할 수 있게 남김).
 > 참고(설치 뒤): `.agents/skills/`는 Codex가 쓰기 보호하는 폴더다. 나중에 스킬을 새로 만들 때 쓰기가 막히면 CLI는 `codex … -s workspace-write --add-dir .agents`로 실행한다(앱에서는 승인 창). 설치 단계에서는 필요 없다.

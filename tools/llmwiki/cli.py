@@ -10,10 +10,10 @@ from . import __version__
 
 HELP_EPILOG = """자주 쓰는 순서:
   llmwiki doctor                          환경 점검
-  llmwiki zotero search "키워드" --collection llmwiki-practice
-  llmwiki zotero import <KEY>             (또는) llmwiki extract "논문.pdf"
+  llmwiki zotero next                     실습 컬렉션에서 최근 추가한 논문 1편을 골라 바로 넣기
+  (또는) llmwiki zotero search "키워드" → llmwiki zotero import <KEY> / llmwiki extract "논문.pdf"
   → 에이전트가 review.md 작성 →
-  llmwiki related --write && llmwiki index && llmwiki log ingest "제목" && llmwiki lint
+  llmwiki finish <slug>                   related --write + index + log + lint 한 번에
 """
 
 
@@ -55,12 +55,20 @@ def build_parser() -> argparse.ArgumentParser:
         x.add_argument("--backend", default="auto", choices=["auto", "local_api", "sqlite", "external"])
     x = zs.add_parser("search", help="키워드/컬렉션/태그로 항목 찾기 (PDF 경로 포함)")
     x.add_argument("query", nargs="?", default="", help="제목·저자·연도 키워드, 영어로 (생략 가능)")
-    x.add_argument("--collection", default="", help="컬렉션 이름 또는 키 (예: llmwiki-practice)")
+    x.add_argument("--collection", default="", help="컬렉션 이름 또는 키 (생략: llmwiki.yaml의 practice_collection)")
+    x.add_argument("--all", action="store_true", help="컬렉션 상관없이 라이브러리 전체에서 찾기")
     x.add_argument("--tag", default="")
     x.add_argument("--limit", type=int, default=20)
     x.add_argument("--no-pdf", action="store_true", help="PDF 경로 조회 생략(빠름)")
     x.add_argument("--everything", action="store_true", help="제목·저자·연도뿐 아니라 초록·메모·전문 색인까지 검색 (qmode=everything)")
     x.add_argument("--backend", default="auto", choices=["auto", "local_api", "sqlite", "external"])
+    x = zs.add_parser("next", help="실습 컬렉션에서 최근 추가한 논문(PDF 있고 위키에 없는 것) 1편을 골라 바로 import")
+    x.add_argument("--collection", default="", help="컬렉션 이름 또는 키 (생략: llmwiki.yaml의 practice_collection)")
+    x.add_argument("--pick", type=int, default=1, help="N번째 후보를 넣기 (기본 1 = 가장 최근)")
+    x.add_argument("--dry-run", action="store_true", help="넣지 않고 무엇을 고를지만 보기")
+    x.add_argument("--offline", action="store_true", help="Crossref/arXiv/OpenAlex 보강 생략 (Zotero 서지만 사용)")
+    x.add_argument("--backend", default="auto", choices=["auto", "local_api", "sqlite", "external"],
+                   help="sqlite = Zotero 데이터 폴더의 zotero.sqlite 사본 (Zotero 로컬 API 없이)")
     x = zs.add_parser("get", help="항목 하나의 서지·PDF 경로")
     x.add_argument("key")
     x.add_argument("--backend", default="auto", choices=["auto", "local_api", "sqlite", "external"])
@@ -123,6 +131,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("index", help="wiki/index.md 자동 블록 재생성 (카테고리별)")
 
+    s = sub.add_parser("finish", help="넣기 마무리 한 번에: related --write → index → log → lint (이 논문 문제만 따로)")
+    s.add_argument("slug")
+    s.add_argument("--op", default="ingest", choices=["ingest", "fix", "synthesize"], help="log 종류 (기본 ingest)")
+    s.add_argument("--note", default="", help="log에 덧붙일 한 줄")
+    s.add_argument("--json", action="store_true")
+
     s = sub.add_parser("log", help="wiki/log.md에 한 줄 추가: ## [날짜] 종류 | 제목")
     s.add_argument("op", choices=["ingest", "query", "lint", "draft", "synthesize", "related", "setup", "fix"])
     s.add_argument("title")
@@ -145,10 +159,48 @@ def _print_results(rows, as_json):
 
 
 def main(argv: list[str] | None = None) -> int:
+    """학생 입력 오류는 Traceback 대신 '[오류] … / 해결: …'로 (QA H38). LLMWIKI_DEBUG=1이면 Traceback도 출력."""
+    import os
     from .console import setup_console
+    from .util import UserError
+    from .zotero import ZoteroUnavailable
     setup_console()
     parser = build_parser()
     args = parser.parse_args(argv)
+    debug = os.environ.get("LLMWIKI_DEBUG") == "1"
+    try:
+        return _dispatch(args, parser)
+    except KeyboardInterrupt:
+        print("\n[중단] 사용자가 멈췄습니다.", file=sys.stderr)
+        return 130
+    except SystemExit as e:  # 안내 문장을 담은 SystemExit → 같은 '[오류]' 형식
+        if isinstance(e.code, str):
+            print(f"[오류] {e.code}", file=sys.stderr)
+            return 2
+        raise
+    except (UserError, ZoteroUnavailable) as e:
+        if debug:
+            raise
+        print(f"[오류] {e}", file=sys.stderr)
+        return 2
+    except (FileNotFoundError, NotADirectoryError, PermissionError, IsADirectoryError) as e:
+        if debug:
+            raise
+        what = {"FileNotFoundError": "파일이나 폴더를 찾지 못했습니다", "NotADirectoryError": "폴더가 아닙니다",
+                "PermissionError": "권한이 없어 읽거나 쓸 수 없습니다", "IsADirectoryError": "파일이 아니라 폴더입니다"}[type(e).__name__]
+        print(f"[오류] {what}: {e.filename or e}\n  해결: 경로를 확인하세요(따옴표로 감싸기). 권한 문제면 OneDrive·보호 폴더 밖(C:\\llmwiki, ~/llmwiki)에서 실행하세요.",
+              file=sys.stderr)
+        return 2
+    except Exception as e:  # noqa: BLE001 — 학생 화면에 Traceback 대신 한 줄
+        if debug:
+            raise
+        print(f"[오류] 예상하지 못한 문제: {type(e).__name__}: {e}\n"
+              f"  해결: 같은 명령을 한 번 더 실행해 보고, 반복되면 이 화면을 강사에게 보여 주세요."
+              f" (자세한 내용: LLMWIKI_DEBUG=1 로 실행)", file=sys.stderr)
+        return 1
+
+
+def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
     if not args.cmd:
         parser.print_help()
         return 0
@@ -199,12 +251,20 @@ def main(argv: list[str] | None = None) -> int:
         elif args.zcmd == "collections":
             _print(backend.collections())
         elif args.zcmd == "search":
-            from .zotero import normalize_item
-            rows = [normalize_item(r) for r in backend.search(args.query, args.collection, args.tag, args.limit,
+            from .zotero import normalize_item, resolve_collection
+            coll, note = args.collection, ""
+            if not args.all and not coll:
+                try:
+                    coll, note = resolve_collection(backend, ws.config, "")
+                except ZoteroUnavailable:
+                    coll, note = "", "설정의 실습 컬렉션을 정할 수 없어 라이브러리 전체에서 찾았습니다(llmwiki zotero collections로 확인)."
+            rows = [normalize_item(r) for r in backend.search(args.query, coll, args.tag, args.limit,
                                                               with_pdf=not args.no_pdf, everything=args.everything)]
             for r in rows:
                 r["abstract"] = (r.get("abstract") or "")[:300]
             out = {"backend": backend.name, "count": len(rows), "items": rows}
+            if note:
+                out["note"] = note
             if not rows and args.query:
                 import re as _re
                 hint = "0건입니다. Zotero 검색은 글자를 그대로 비교합니다."
@@ -214,6 +274,19 @@ def main(argv: list[str] | None = None) -> int:
                     hint += " 초록·메모까지 찾으려면 --everything 을 붙이세요."
                 out["hint"] = hint
             _print(out)
+        elif args.zcmd == "next":
+            from .zotnext import run as znext
+            res = znext(ws, backend, collection=args.collection, pick=max(1, args.pick), offline=args.offline, dry_run=args.dry_run)
+            _print(res)
+            if res["status"] == "none":
+                print(res["message"])
+                return 3
+            if res["status"] in ("ok", "duplicate"):
+                p = res["picked"]
+                print(f"고른 논문: {p['title']} ({p['year']}, {p['first_author'] or '저자 미상'}) → wiki/papers/{res.get('slug', '')}/")
+                if res["other_candidates"]:
+                    print("다른 후보: " + " · ".join(f"[{c['pick']}] {c['title'][:50]}" for c in res["other_candidates"]))
+            return 0 if res["status"] in ("ok", "duplicate", "dry-run") else 1
         elif args.zcmd == "get":
             from .zotero import normalize_item
             _print(normalize_item(backend.get(args.key)))
@@ -259,6 +332,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.target and not args.slug:
             args.slug = args.target
         res = related.compute(ws, top_k=args.top)
+        if args.slug and args.slug not in res and not (ws.papers / args.slug).is_dir():
+            raise SystemExit(f"논문 slug를 찾지 못했습니다: {args.slug} (wiki/papers/ 아래 폴더 이름)")
         if args.slug:
             res_view = {args.slug: res.get(args.slug, [])}
         else:
@@ -306,6 +381,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "clusters":
         from . import related
         from .network import links_between
+        if not 0 < args.threshold < 1:
+            raise SystemExit("--threshold 는 0과 1 사이 값입니다(기본값을 쓰려면 빼세요).")
         res = related.clusters(ws, args.threshold)
         lb = links_between(ws, [[p["slug"] for p in c["papers"]] for c in res["clusters"]])
         for x in res["cross_links"]:
@@ -340,6 +417,22 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(md)
         return 0
+
+    if args.cmd == "finish":
+        from .finish import run as finish
+        res = finish(ws, args.slug, op=args.op, note=args.note)
+        if args.json:
+            _print(res)
+        else:
+            for st in res["steps"]:
+                print(f"[{'OK' if st['rc'] == 0 else 'FAIL'}] {st['step']:<16} rc={st['rc']}  {st['detail']}")
+            for i in res["paper_issues"]:
+                print(f"  [{i['level']}] {i['code']:<14} {i['path']}  {i['msg']}")
+            if res["other_papers_errors"]:
+                print(f"  (참고: 다른 논문의 ERROR {res['other_papers_errors']}개 — llmwiki lint 로 확인)")
+        print(res["result"])
+        print(res["last_line"])
+        return 0 if res["ok"] else 1
 
     if args.cmd == "index":
         from .wikiops import write_index

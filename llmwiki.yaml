@@ -4,7 +4,7 @@ zotero:
   order: [local_api, sqlite, external]
   local_api_url: "http://127.0.0.1:23119/api"
   data_dir: ""          # 비우면 자동(~/Zotero, prefs.js). 예: "D:/Zotero"
-  practice_collection: "llmwiki-practice"   # doctor가 이 컬렉션과 PDF 수를 확인(실습용)
+  practice_collection: "llmwiki-practice"   # zotero next·search의 기본 컬렉션 + doctor 점검(이름을 바꿨으면 여기도)
   # 외부 Zotero CLI 연결 자리(선택). {query} {collection} {tag} {limit} {key} 가 치환됩니다.
   # 명령은 표준출력으로 JSON을 내야 합니다. 예시는 README의 'Zotero CLI 연결' 참고.
   external_cli:

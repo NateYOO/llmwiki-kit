@@ -39,16 +39,22 @@ llmwiki/                        ← ChatGPT 데스크톱 앱(Codex)에서 "이 �
 
 1. **빈 폴더 만들기** — Windows: `C:\llmwiki` · macOS: 홈 폴더의 `llmwiki` (OneDrive·iCloud·문서·바탕 화면 **안은 피하세요**: 동기화가 설치 파일 수천 개와 충돌합니다)
 2. ChatGPT 데스크톱 앱 → Codex → 그 폴더 열기 (모델 Luna, 추론 Medium)
-3. 채팅창에 이 문장을 그대로 붙여 넣기:
+3. 채팅창에 아래 **설치 문장**을 그대로 붙여 넣기 (강사가 `<REPO_URL>`을 실제 주소로 바꿔 나눠 줍니다)
+4. 에이전트가 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 하면 **[승인]** 을 누릅니다(보통 2번). Windows에서 화면이 어두워지며 "이 앱이 디바이스를 변경하도록 허용…" 창이 뜨면 **[예]** (Git 설치, 거절해도 설치는 계속됨). 창이 안 보이는데 오래 멈춰 있으면 **작업 표시줄에서 깜빡이는 방패 아이콘**을 누르세요.
+5. 5~10분 뒤 `설치 완료 ✅ / 남은 일: …` 이 나오면 끝. **새 채팅**을 열어 2절의 인식 확인을 해 보세요.
 
-   ```
-   <REPO_URL> 의 INSTALL_FOR_AGENT.md 를 그대로 따라 이 폴더에 설치해 주세요.
-   ```
-4. 에이전트가 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 하면 **[승인]** 을 누릅니다. Windows에서 "이 앱이 디바이스를 변경하도록 허용…" 창이 뜨면 **[예]** (Git 설치, 거절해도 설치는 계속됨).
-5. 5~10분 뒤 마지막 줄이 `설치 완료 ✅ / 남은 일: …` 이면 끝. **새 채팅**을 열어 2절의 인식 확인을 해 보세요.
+```text
+LLM 위키 키트를 이 폴더에 설치해 주세요. 저장소: <REPO_URL>
+1) 먼저 저에게 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 말하고,
+2) 제 컴퓨터에 맞는 아래 한 줄을 샌드박스 밖(승인 요청)으로 글자 그대로 실행한 뒤,
+3) 출력 끝의 RESULT: 줄과 AGENT: 줄이 시키는 대로만 하세요. 다른 명령은 만들지 마세요.
+Windows: [Console]::OutputEncoding=[Text.Encoding]::UTF8; iwr -useb <REPO_URL>/raw/main/setup/bootstrap-windows.ps1 -OutFile "$env:TEMP\llmwiki-bootstrap.ps1"; powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\llmwiki-bootstrap.ps1" -CheckOnly -RepoUrl <REPO_URL>
+macOS: curl -fsSL <REPO_URL>/raw/main/setup/bootstrap-mac.sh -o /tmp/llmwiki-bootstrap.sh && bash /tmp/llmwiki-bootstrap.sh --check-only --repo <REPO_URL>
+```
+- 설치 문장에 첫 명령(받기 + 폴더 점검)이 글자 그대로 들어 있어 에이전트가 따로 판단할 것이 없습니다. 다음 명령은 그 명령의 출력이 알려 줍니다(`AGENT_CMD:` 줄). 절차의 원본은 [INSTALL_FOR_AGENT.md](INSTALL_FOR_AGENT.md)입니다.
 
-에이전트가 하는 일(학생은 승인만): 폴더 점검 → (Windows) winget 확인·Git 설치(선택) → **uv로 Python 3.12 설치(관리자 권한 없음, Microsoft Store python 별칭을 쓰지 않음)** → 키트 받기(Git이 없으면 ZIP) → `.venv`에 pymupdf·pyyaml·pyzotero 설치 → UTF-8 설정 → `llmwiki doctor`.
-다시 실행해도 안전합니다(이미 있는 파일은 덮어쓰지 않음). 오류 코드(E00~E07)는 [INSTALL_FOR_AGENT.md](INSTALL_FOR_AGENT.md) 표를 보세요.
+에이전트가 하는 일(학생은 승인만): 받기 + 폴더 점검 → (Windows) winget 확인·Git 설치(선택) → **uv로 Python 3.12 설치(관리자 권한 없음, Microsoft Store python 별칭을 쓰지 않음)** → 키트 받기(Git이 없으면 ZIP) → `.venv`에 pymupdf·pyyaml·pyzotero 설치 → UTF-8 설정 → `llmwiki doctor`.
+다시 실행해도 안전합니다(이미 있는 파일은 덮어쓰지 않음). 내 컴퓨터에 남는 변경: 사용자 환경 변수 `PYTHONUTF8=1`(한글 출력용, Windows) 하나와 uv·Python(사용자 폴더). 오류 코드(E00~E07, 17)는 [INSTALL_FOR_AGENT.md](INSTALL_FOR_AGENT.md) 표를 보세요.
 
 ### 1-1. 다른 설치 방법
 | 방법 | 언제 | 하는 법 |
@@ -93,8 +99,9 @@ Windows에는 Git이 기본으로 없으므로 **Download ZIP**이 표준 수동
 
 ## 3. Zotero 준비 (무료 계정, PDF는 내 컴퓨터에 저장)
 1. Zotero 7 이상 설치·실행 → **설정 → 고급 → "이 컴퓨터의 다른 응용 프로그램이 Zotero와 통신하도록 허용"** 켜기 (macOS: Zotero → 설정, Windows: 편집 → 설정)
-2. 새 컬렉션 **`llmwiki-practice`** 를 만들고 논문 PDF 2~3편을 넣기 (PDF가 Zotero에 첨부된 로컬 파일이어야 합니다)
-3. `llmwiki doctor`에서 `Zotero 로컬 API`와 `실습 컬렉션`이 PASS인지 확인
+2. 새 컬렉션 **`llmwiki-practice`** 를 만들고 넣을 논문 PDF **1편**을 끌어다 넣기(2편째는 선택). PDF가 Zotero에 첨부된 로컬 파일이어야 하고, 하위 컬렉션은 만들지 마세요. 이름을 다르게 만들었으면 `llmwiki.yaml`의 `practice_collection`을 그 이름으로 바꾸세요(컬렉션이 하나뿐이면 자동으로 그것을 씁니다).
+3. 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」 → `Zotero 로컬 API`와 `실습 컬렉션`이 PASS인지 확인 (샌드박스 안에서 돌리면 Zotero 접속이 막혀 거짓 WARN이 날 수 있어 승인 요청으로 실행합니다)
+- `$wiki-ingest 최근 1편`은 이 컬렉션에서 **Zotero에 추가한 날짜**가 가장 최근이고, PDF가 있고, 위키에 아직 없는 논문을 골라 넣습니다(`llmwiki zotero next`). 그래서 컬렉션에는 실습할 논문만 넣으세요.
 - Zotero 검색은 제목·저자·연도의 **글자를 그대로** 비교합니다. 한국어로 찾으면 영어 논문이 0건이므로 **영어 단어**로 찾으세요(에이전트는 자동으로 영어로 바꿔 검색합니다). 초록까지 찾으려면 `--everything`.
 - Zotero가 꺼져 있으면 `zotero.sqlite`의 **복사본**(-wal·-shm 포함)을 읽습니다. 원본 DB에는 절대 쓰지 않습니다.
 - 별도 Zotero CLI를 쓰고 싶으면 `llmwiki.yaml`의 `external_cli`에 명령 템플릿을 넣습니다(JSON 출력, `{query}` `{collection}` `{tag}` `{limit}` `{key}` 치환).
@@ -102,7 +109,7 @@ Windows에는 Git이 기본으로 없으므로 **Download ZIP**이 표준 수동
 ## 4. 쓰는 법 (한 줄 프롬프트)
 | 하고 싶은 일 | 채팅에 |
 |---|---|
-| 논문 넣기 | `$wiki-ingest 튜터링 논문` · `llmwiki-practice 컬렉션 논문 넣어줘` · `$wiki-ingest raw/논문.pdf` |
+| 논문 넣기 | `$wiki-ingest 최근 1편` (가장 기본) · `$wiki-ingest tutoring` · `$wiki-ingest raw/논문.pdf` |
 | 근거 있는 답 | `$wiki-query LLM 튜터의 학습 효과 근거는?` |
 | 문구·그림 찾기 | `"learning by teaching" 문구 어디 나와?` · `시스템 구조 그림 찾아줘` |
 | 점검 | `$wiki-lint` |
@@ -120,6 +127,7 @@ Windows에는 Git이 기본으로 없으므로 **Download ZIP**이 표준 수동
 
 ## 5. 승인 창에 대해
 - git이 없는 폴더는 처음에 읽기 전용으로 시작할 수 있고, `.agents/`(스킬 폴더)는 쓰기가 보호됩니다. 그래서 첫 쓰기·스킬 만들기에서 승인 창이 뜹니다. 설치 스크립트는 Git이 있으면 `git init`을 해서 이 폴더를 버전 관리 폴더로 만듭니다.
+- 새 채팅에서 `llmwiki doctor`는 **승인 요청으로** 실행해 달라고 하세요(`--offline`이면 인터넷 점검은 생략). 샌드박스 안에서는 Zotero(127.0.0.1)·인터넷 접속이 막혀 거짓 WARN이 날 수 있습니다.
 - 터미널의 `codex exec`로 스킬을 만들 때는 `--add-dir .agents`를 붙이면 `.agents/skills/` 쓰기가 허용됩니다(QA 실측, codex-cli 0.161.0). 앱에서는 승인 창으로 허용합니다.
 
 ## 6. 개인 자료와 공개 저장소

@@ -4,7 +4,8 @@
 # Codex 앱 에이전트가 INSTALL_FOR_AGENT.md 절차대로 실행한다. 학생은 [승인]만 누른다.
 #
 #   실행(고정):  bash <이 파일> --repo <저장소 주소>
-#   점검만:      bash <이 파일> --check-only
+#   점검만:      bash <이 파일> --check-only --repo <저장소 주소>   (학생 설치 문장의 첫 명령. 끝에 다음 명령을 AGENT_CMD: 줄로 알려 줌)
+#   에이전트 판정: 마지막 부분의 ASCII 줄 'RESULT: …'(CHECK_OK / OK / DOCTOR_FAIL / FAIL Exx)과 'AGENT: …'만 보면 된다.
 # 하는 일 (8단계, 다시 실행해도 안전 / 기존 파일은 절대 덮어쓰지 않음):
 #   0 폴더 점검  1 기본 도구(curl·unzip)  2 Git(선택: Xcode 명령어 도구)  3 uv + Python 3.12(관리자 권한 없음)
 #   4 키트 받기(git clone 또는 ZIP) + 병합  5 .venv + 패키지  6 UTF-8  7 git init  8 doctor + 한 줄 요약
@@ -27,7 +28,14 @@ export PYTHONUTF8=1 PYTHONIOENCODING=utf-8 LC_ALL="${LC_ALL:-en_US.UTF-8}"
 TOTAL=8; LOG=""
 say()  { echo "$*"; [ -n "$LOG" ] && echo "$*" >> "$LOG" 2>/dev/null; return 0; }
 step() { say ""; say "[$1/$TOTAL] $2   ($(date +%H:%M:%S))"; }
-die()  { say ""; say "[$1] $2"; [ -n "${3:-}" ] && say "  해결: $3"; say "설치 중단 ❌ / 오류 코드 $1"; exit $((10 + 10#${1#E})); }
+die()  {
+  say ""; say "[$1] $2"; [ -n "${3:-}" ] && say "  해결: $3"; say "설치 중단 ❌ / 오류 코드 $1"; say "RESULT: FAIL $1"
+  case "$1" in
+    E00|E05) say "AGENT: Read the line starting with '해결:' to the student word for word and STOP. Do not retry, do not try other commands." ;;
+    *) say "AGENT: Retry the same command ONCE. If it fails again, say: '설치가 멈췄습니다. 오류 코드 $1 - 손을 들어 이 화면을 보여 주세요.' and paste the last 20 lines. Then STOP." ;;
+  esac
+  exit $((10 + 10#${1#E}))
+}
 run()  { "$@" 2>&1 | while IFS= read -r l; do say "    $l"; done; return "${PIPESTATUS[0]}"; }
 dl()   { for i in 1 2; do curl -fL --retry 2 -sS "$1" -o "$2" && return 0; say "    다운로드 실패($i/2): $1"; sleep 2; done; return 1; }
 
@@ -59,7 +67,20 @@ if [ -n "$OTHERS" ] && [ $KIT_HERE -eq 0 ] && [ $ALLOW_NONEMPTY -eq 0 ]; then
   die E00 "폴더가 비어 있지 않습니다: $OTHERS" "새 빈 폴더(권장: ~/llmwiki)를 열어 다시 시작하세요. 기존 연구 폴더에 넣으려면 README의 'llmwiki init' 방법을 쓰세요."
 fi
 [ $KIT_HERE -eq 1 ] && say "  이미 키트가 있는 폴더 → 이어서 설치(기존 파일 보존)" || say "  빈 폴더 확인"
-if [ $CHECK_ONLY -eq 1 ]; then say ""; say "CHECK OK - 설치를 진행해도 됩니다."; exit 0; fi
+if [ $CHECK_ONLY -eq 1 ]; then
+  say ""; say "CHECK OK - 설치를 진행해도 됩니다."; say "RESULT: CHECK_OK"
+  case "$REPO_URL" in
+    ""|*"<"*) ;;
+    *)
+      SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+      say "AGENT: Step 2 of 2. First say to the student exactly (Korean):"
+      say "AGENT_SAY: 설치를 시작합니다(5~10분, 창을 닫지 마세요). 곧 승인 창이 뜹니다. [승인]을 누르세요. '명령어 도구 설치' 창이 뜨면 [설치]를 눌러도, [나중에]를 눌러도 됩니다(설치는 그대로 계속됩니다)."
+      say "AGENT: Then run this ONE command outside the sandbox (request approval/escalated, justification '설치 파일 받기', timeout 1200000 ms). Wait until it ends, even if it looks stuck:"
+      say "AGENT_CMD: bash \"$SELF\" --repo \"$REPO_URL\""
+      say "AGENT: Then branch ONLY on the line starting with 'RESULT:' and follow the 'AGENT:' lines printed after it." ;;
+  esac
+  exit 0
+fi
 LOG="$TARGET/.llmwiki-install.log"; say "--- 설치 시작 $(date '+%Y-%m-%d %H:%M:%S') ---"
 
 # ---------------------------------------------------------------- 1. 기본 도구
@@ -191,6 +212,16 @@ FAILS="$(printf '%s\n' "$OUT" | sed -n 's/^FAIL=//p')"
 printf '%s\n' "$OUT" | grep -v '^FAIL=' | sed '$d' | while IFS= read -r l; do say "$l"; done
 rm -rf "$TMPK"
 say ""
+if [ "${FAILS:-1}" != "0" ]; then  # 종료 17: '다음' 안내는 찍지 않는다(QA H33)
+  say "$(printf '%s\n' "$OUT" | tail -1)"
+  say "RESULT: DOCTOR_FAIL"
+  say "AGENT: Do NOT rerun. Read the line '설치 미완료 ❌ / 해결할 것: …' above to the student word for word, then say: '이것을 고친 뒤 같은 설치 문장을 다시 보내 주세요(이미 받은 것은 건너뜁니다).' Then STOP."
+  exit 17
+fi
 say "다음: Codex 앱에서 이 폴더로 '새 채팅'을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요."
 say "$(printf '%s\n' "$OUT" | tail -1)"
-[ "${FAILS:-1}" = "0" ] && exit 0 || exit 17
+say "RESULT: OK"
+say "AGENT: Say to the student, in this order: (1) the line starting with '설치 완료' above; (2) '새 채팅을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요.'; (3) 'Zotero를 켜고 설정 → 고급에서 다른 응용 프로그램과 통신 허용을 켠 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요.' Then STOP."
+# 받은 bootstrap 사본은 성공했을 때만 지운다(QA H37)
+[ "$(basename "$0")" = "llmwiki-bootstrap.sh" ] && case "$0" in /tmp/*) rm -f "$0" ;; esac
+exit 0

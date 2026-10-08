@@ -1,6 +1,6 @@
 ---
 name: wiki-ingest
-description: 논문 넣기(ingest). 논문 제목·Zotero 키·컬렉션·PDF 경로를 받아 추출 → 한국어 7섹션 리뷰 → 관련 링크 → index/log → lint.
+description: 논문 넣기(ingest). 입력 없음·'최근 1편'이면 zotero next, 제목·키·PDF면 그것으로 추출 → 한국어 7섹션 리뷰 → finish(관련 링크·index·log·lint).
 ---
 
 # wiki-ingest — 논문 한 편을 위키에 넣기
@@ -9,28 +9,26 @@ description: 논문 넣기(ingest). 논문 제목·Zotero 키·컬렉션·PDF �
 macOS/Linux `./llmwiki`, Windows `.\llmwiki.cmd` 로 바꿔 실행한다.
 
 ## 입력 해석
-사용자가 준 것(스킬 이름 뒤의 글)을 보고 고른다:
+사용자가 준 것(스킬 이름 뒤의 글)을 보고 고른다. 컬렉션 이름은 `llmwiki.yaml`의 `practice_collection`이 기본값이라 적지 않는다.
 | 입력 | 할 일 |
 |---|---|
+| 아무것도 없음 · "최근" · "최근 1편" · "컬렉션에서 1편" | `llmwiki zotero next` (묻지 않음) |
+| "컬렉션 X에서" | `llmwiki zotero next --collection "X"` |
 | PDF 경로 (`.pdf`로 끝남) | 2단계 B로 |
 | Zotero 항목 키 (8자 영숫자, 예 `ABCD1234`) | `llmwiki zotero import <KEY>` |
-| 논문 제목·저자·키워드 | `llmwiki zotero search "<키워드>"` |
-| "컬렉션 X" | `llmwiki zotero search --collection "X"` (실습 컬렉션 이름: `llmwiki-practice`) |
-| 아무것도 없음 | 무엇을 넣을지 묻는다 |
+| 논문 제목·저자·키워드 | `llmwiki zotero search "<영어 키워드>"` |
 
 ## 절차
-1. **찾기** — `llmwiki zotero search "<키워드>" [--collection 이름] [--tag 태그]`
-   - **키워드는 영어로 바꿔서 검색한다.** Zotero 검색(`q=`)은 제목·저자·연도 글자를 그대로 비교하므로 "튜터링"으로는 영어 논문 "tutoring"이 0건이다.
-     예: "대화형 튜터링 LLM" → `llmwiki zotero search "tutoring"` 후 필요하면 `"conversational"`, `"LLM"`처럼 한 단어씩. 저자 성(영문)과 연도도 잘 맞는다.
-   - 0건이면 다른 영어 동의어로 한두 번 더 찾고, 그래도 없으면 `--collection llmwiki-practice`처럼 컬렉션 전체 목록을 보여 준다.
-   - 후보를 표로 보여 준다: 번호 · 제목 · 연도 · 제1저자 · PDF 유무(`pdf`가 빈칸이면 없음).
-   - 후보가 하나면 바로 진행한다. 여러 개이고 어느 것인지 분명하지 않으면 **번호로 고르게 한다**(유일한 질문 지점). 컬렉션 전체를 요청받으면 한 번에 한 편씩 차례로 진행한다.
-   - Zotero 연결 실패 시: 오류 메시지를 그대로 보여 주고(보통 "Zotero 실행 + 설정→고급→다른 응용 프로그램과 통신 허용"), `llmwiki doctor`로 확인하거나 PDF 경로를 직접 달라고 한다.
-2. **추출**
-   - A. Zotero: `llmwiki zotero import <KEY>`
-   - B. PDF: `llmwiki extract "<PDF 경로>"` (경로에 공백·한글이 있으면 따옴표)
+1. **고르기**
+   - `zotero next`: Zotero에 **추가한 날짜**가 가장 최근이고, 로컬 PDF가 있고, 위키에 아직 없는 논문을 골라 **바로 추출까지** 한다 → 2단계는 건너뛴다. 결과의 `picked`(고른 논문)·`other_candidates`(다음 후보 2편)를 기억한다. `status: none`(종료 코드 3)이면 `message`를 그대로 전하고 멈춘다.
+   - `zotero search`: **키워드는 영어로 바꿔서**(예: "튜터링" → `tutoring`). 기본은 실습 컬렉션 안, 전체 라이브러리는 `--all`. 0건이면 영어 동의어로 한두 번 더, 초록까지는 `--everything`.
+     후보 표(번호 · 제목 · 연도 · 제1저자 · PDF 유무). 하나면 바로 진행, 여럿이고 불분명하면 **번호로 고르게 한다**(유일한 질문 지점).
+   - `[오류]`에 컬렉션 번호 목록이 나오면 그 목록을 보여 주고 번호를 고르게 한 뒤 `--collection "<이름>"`으로 다시 한다.
+   - Zotero 연결 실패: 오류를 그대로 보여 준다(보통 "Zotero 실행 + 설정→고급→다른 응용 프로그램과 통신 허용"). 샌드박스에서 127.0.0.1이 막힌 것 같으면 `--backend sqlite --offline`(Zotero 데이터 폴더 사본, 인터넷 없음)으로 한 번 시도, 안 되면 PDF 경로를 달라고 한다.
+2. **추출** (`zotero next`를 썼으면 이미 끝남)
+   - A. Zotero: `llmwiki zotero import <KEY>` · B. PDF: `llmwiki extract "<PDF 경로>"` (공백·한글 경로는 따옴표)
    - 네트워크가 막혔다는 오류/지연이 있으면 `--offline`을 붙여 다시.
-   - 결과 JSON의 `status`가 `duplicate`이면 이미 있는 논문이다 → 알려 주고 멈춘다(사용자가 원하면 `--force`, review.md는 보존됨).
+   - `status`가 `duplicate`이면 이미 있는 논문이다 → 알려 주고 멈춘다(원하면 `--force`, review.md는 보존).
    - `slug`, `figures`, `tables`, `low_confidence_crops`, `warnings`를 기억한다.
 3. **읽기** — `wiki/papers/<slug>/` 에서
    - `meta.json`(서지·초록) → `source.md` 전체(페이지 표시 `<!-- p.N -->`) → `figures/figures.md`, `tables/tables.md`.
@@ -43,12 +41,11 @@ macOS/Linux `./llmwiki`, Windows `.\llmwiki.cmd` 로 바꿔 실행한다.
    - 사실 문장마다 `[근거: <slug> · p.N]` 또는 `[근거: <slug> · Table N]`.
    - 그림 블록은 dual-coding 3줄 + "원문 PDF 캡처 · 로컬 연구용". ⚠️(신뢰도 낮음) 그림은 눈으로 확인 후에만.
    - 원문 문단을 옮기지 않는다. 한국어 서술, 용어는 원어.
-6. **연결** — `llmwiki related --write` 실행 후 이 논문의 `## Related Papers` 자동 블록을 읽는다.
-   - 실제로 관계가 보이면(같은 시스템의 후속 연구, 반대 결과, 응용 등) 블록 **밖**에 `### 에이전트 해석`을 추가해 1–3줄로 근거와 함께 쓴다. 근거 없으면 쓰지 않는다.
-   - 같은 주제의 논문이 2편 이상이면 `wiki/topics/<주제>.md`를 만들거나 갱신해 두 리뷰를 링크한다(기존 주제 페이지는 덧붙이기만).
-7. **목차·기록** — `llmwiki index` → `llmwiki log ingest "<논문 제목>" --note "wiki/papers/<slug>/review.md"`
-8. **검사** — `llmwiki lint`. 이 논문 관련 ERROR는 고친다. WARN은 보고만 해도 된다.
-9. **보고** — 만든/바꾼 파일 목록, 사용한 그림, lint 요약, 다음 제안(관련 논문 읽기, 질문 예시)을 짧게.
+6. **마무리** — `llmwiki finish <slug>` (related --write → index → log → lint를 한 번에, 단계별 rc 포함)
+   - 이 논문의 `## Related Papers` 자동 블록을 읽고, 실제 관계가 보이면 블록 **밖**에 `### 에이전트 해석` 1–3줄(근거 포함). 근거 없으면 쓰지 않는다.
+   - 같은 주제의 논문이 2편 이상이면 `wiki/topics/<주제>.md`를 만들거나 덧붙여 두 리뷰를 링크한다.
+   - `paper_issues`의 ERROR를 고치고 `llmwiki finish <slug>`를 다시 부른다(같은 날 log는 한 번만 남음). 마지막 줄이 `넣기 완료 ✅ …`이면 끝.
+7. **보고** — `finish`의 마지막 줄, 만든/바꾼 파일, 사용한 그림. `zotero next`였으면 끝에 한 줄: 「다른 논문을 원하면: `$wiki-ingest <제목 일부>` (다음 후보: …)」 — 묻지 않는다.
 
 ## 하지 말 것
 - 유료 LLM API 호출, Zotero DB·PDF 수정, `source.md`/`meta.json` 손편집, related 자동 블록 손편집.

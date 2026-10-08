@@ -11,4 +11,4 @@ papers: [2024-schmucker-ruffle-riley-insights-designing, 2024-wang-tutor-copilot
 - **평가 기준**: [Yan et al. 2023](../papers/2023-yan-practical-ethical-challenges-large/review.md) — 118편 리뷰에서 낮은 기술 성숙도·재현성 부족을 지적했다 [근거: 2023-yan-practical-ethical-challenges-large · p.10; p.12].
 
 ## 열린 질문
-- (제안) 두 튜터링 방식을 Yan et al.의 7개 평가 항목으로 나란히 채점하면 무엇이 보이는가?
+- (가설) 두 튜터링 방식을 Yan et al.의 7개 평가 항목으로 나란히 채점하면 무엇이 보이는가?

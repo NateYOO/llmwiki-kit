@@ -36,6 +36,72 @@ class ZoteroUnavailable(RuntimeError):
     pass
 
 
+def collection_not_found(name: str, cols: list[dict[str, Any]]) -> ZoteroUnavailable:
+    """없는 컬렉션 이름 → 지금 있는 컬렉션 목록과 다음 행동을 담은 한 덩어리 안내 (QA H38)."""
+    names = [c["name"] for c in cols][:12]
+    have = ", ".join(f"'{n}'" for n in names) if names else "(컬렉션이 하나도 없음)"
+    first = names[0] if names else "컬렉션 이름"
+    return ZoteroUnavailable(
+        f"컬렉션 '{name}'을(를) 찾지 못했습니다.\n"
+        f"  지금 있는 컬렉션: {have}\n"
+        f"  해결: ① Zotero에서 'llmwiki-practice' 컬렉션을 만들고 논문 PDF 1편 이상을 넣거나\n"
+        f"        ② 있는 이름으로 다시 찾기: llmwiki zotero search \"<영어 키워드>\" --collection \"{first}\"\n"
+        f"        (전체 목록: llmwiki zotero collections)")
+
+
+def pick_collection(name_or_key: str, cols: list[dict[str, Any]]) -> dict[str, Any]:
+    """키 → 이름(대소문자 무시) → 이름 일부 순으로 찾는다. 일부 일치가 여럿이면 목록을 보여 주고 멈춘다."""
+    for c in cols:
+        if c["key"] == name_or_key:
+            return c
+    low = _nfc(name_or_key).lower()
+    exact = [c for c in cols if _nfc(c["name"]).lower() == low]
+    if exact:
+        return exact[0]
+    part = [c for c in cols if low and low in _nfc(c["name"]).lower()]
+    if len(part) == 1:
+        return part[0]
+    if len(part) > 1:
+        raise ZoteroUnavailable(f"'{name_or_key}'이(가) 들어간 컬렉션이 여러 개입니다:\n" + numbered_collections(part)
+                                + "\n  해결: 정확한 이름으로 다시: --collection \"<이름>\"")
+    raise collection_not_found(name_or_key, cols)
+
+
+def numbered_collections(cols: list[dict[str, Any]]) -> str:
+    return "\n".join(f"  {i}. {_nfc(c['name'])}" for i, c in enumerate(cols[:20], 1))
+
+
+def resolve_collection(backend: Any, cfg: dict, explicit: str = "") -> tuple[str, str]:
+    """(컬렉션 키, 안내) — QA H41.
+    명시한 이름 > llmwiki.yaml의 zotero.practice_collection > 컬렉션이 하나뿐이면 그것 > 여럿이면 번호 목록과 함께 멈춤."""
+    cols = backend.collections()
+    if explicit:
+        return pick_collection(explicit, cols)["key"], ""
+    want = (cfg.get("zotero", {}) or {}).get("practice_collection") or ""
+    if want:
+        low = _nfc(want).lower()
+        for c in cols:
+            if c["key"] == want or _nfc(c["name"]).lower() == low:
+                return c["key"], ""
+    top = [c for c in cols if not c.get("parent")] or cols
+    if len(top) == 1:
+        note = (f"설정의 '{want}' 컬렉션이 없어 하나뿐인 컬렉션 '{_nfc(top[0]['name'])}'을(를) 씁니다."
+                if want else f"컬렉션 '{_nfc(top[0]['name'])}'을(를) 씁니다.")
+        return top[0]["key"], note
+    if not top:
+        raise ZoteroUnavailable(
+            f"Zotero에 컬렉션이 없습니다.\n  해결: Zotero 왼쪽 'My Library' 우클릭 → 새 컬렉션 '{want or 'llmwiki-practice'}' → 논문 PDF 1편 이상 끌어다 넣기")
+    raise ZoteroUnavailable(
+        f"설정의 실습 컬렉션 '{want}'이(가) 없고 컬렉션이 여러 개입니다. 어느 것을 쓸지 번호를 골라 주세요:\n"
+        + numbered_collections(top)
+        + "\n  해결: 고른 이름으로 다시: --collection \"<이름>\"  (늘 같은 것을 쓰려면 llmwiki.yaml의 practice_collection을 그 이름으로)")
+
+
+def _arxiv_from(text: str) -> str:
+    m = re.search(r"(?:arxiv[:./\s]*|abs/)(\d{4}\.\d{4,5})", text or "", re.I)
+    return m.group(1) if m else ""
+
+
 def _year(date: str) -> str:
     m = re.search(r"(\d{4})", date or "")
     return m.group(1) if m else ""
@@ -96,6 +162,9 @@ class LocalApiBackend:
             raise ZoteroUnavailable(f"로컬 API 연결 실패({self.base}): Zotero가 실행 중인지 확인하세요. ({e})") from e
         if status == 403:
             raise ZoteroUnavailable("로컬 API 403: Zotero 설정 → 고급 → '이 컴퓨터의 다른 응용 프로그램이 Zotero와 통신하도록 허용'을 켜세요.")
+        if status == 404 and path.startswith("/items/"):
+            raise ZoteroUnavailable(f"Zotero 항목을 찾지 못했습니다(키 {path.rsplit('/', 1)[-1]}). "
+                                    "키는 `llmwiki zotero search \"<영어 키워드>\"` 결과의 key 값(영문 대문자·숫자 8자)입니다.")
         if status != 200:
             raise ZoteroUnavailable(f"로컬 API HTTP {status}: {url}")
         text = body.decode("utf-8", errors="replace")
@@ -129,6 +198,8 @@ class LocalApiBackend:
             "collections": d.get("collections", []),
             "tags": [t.get("tag", "") for t in d.get("tags", []) or []],
             "citekey": d.get("citationKey", ""),
+            "arxiv": _arxiv_from(" ".join(str(d.get(k, "")) for k in ("extra", "url", "DOI"))),
+            "date_added": d.get("dateAdded", ""),
             "pdf": "",
             "backend": self.name,
         }
@@ -157,7 +228,7 @@ class LocalApiBackend:
         return [{"key": c["data"]["key"], "name": c["data"]["name"], "parent": c["data"].get("parentCollection") or ""} for c in data]
 
     def search(self, query: str = "", collection: str = "", tag: str = "", limit: int = 20, with_pdf: bool = True,
-               everything: bool = False) -> list[dict[str, Any]]:
+               everything: bool = False, sort: str = "") -> list[dict[str, Any]]:
         # 서버의 itemType 부정 조합('-attachment || note')은 기대대로 걸러지지 않아(QA H06),
         # '-attachment'만 서버에 맡기고 노트·주석은 여기서 거른 뒤, limit을 채울 때까지 start로 페이지를 넘긴다.
         ckey = self._collection_key(collection) if collection else ""
@@ -166,6 +237,8 @@ class LocalApiBackend:
         for _ in range(20):  # 최대 2000건 훑기
             params = {"q": query, "qmode": "everything" if everything else "titleCreatorYear", "tag": tag,
                       "limit": page, "start": start, "format": "json", "itemType": "-attachment"}
+            if sort:  # 'dateAdded' → 최근 추가 순 (QA 23129에서 sort/direction 동작 확인)
+                params.update({"sort": sort, "direction": "desc"})
             if ckey:
                 data = self._call("collection_items_top", (ckey,), params, f"/collections/{ckey}/items/top")
             else:
@@ -186,14 +259,7 @@ class LocalApiBackend:
         return self._item(self._call("item", (key,), {"format": "json"}, f"/items/{key}"))
 
     def _collection_key(self, name_or_key: str) -> str:
-        cols = self.collections()
-        for c in cols:
-            if c["key"] == name_or_key:
-                return c["key"]
-        hits = [c for c in cols if c["name"].lower() == name_or_key.lower()] or [c for c in cols if name_or_key.lower() in c["name"].lower()]
-        if not hits:
-            raise ZoteroUnavailable(f"컬렉션 '{name_or_key}'을(를) 찾지 못했습니다. `llmwiki zotero collections`로 이름을 확인하세요.")
-        return hits[0]["key"]
+        return pick_collection(name_or_key, self.collections())["key"]
 
 
 def _nfc(text: str) -> str:
@@ -352,10 +418,12 @@ class SqliteBackend:
             "venue": f.get("publicationTitle") or f.get("proceedingsTitle") or f.get("conferenceName") or "",
             "item_type": row["typeName"], "collections": cols, "tags": tags,
             "citekey": f.get("citationKey", ""),
+            "arxiv": _arxiv_from(" ".join([f.get("extra", ""), f.get("url", ""), f.get("DOI", "")])),
+            "date_added": row["dateAdded"] if "dateAdded" in row.keys() else "",
             "pdf": self._pdf(row["itemID"]) if with_pdf else "", "backend": self.name,
         }
 
-    _BASE = ("SELECT i.itemID, i.key, t.typeName FROM items i JOIN itemTypes t ON t.itemTypeID=i.itemTypeID "
+    _BASE = ("SELECT i.itemID, i.key, i.dateAdded, t.typeName FROM items i JOIN itemTypes t ON t.itemTypeID=i.itemTypeID "
              "WHERE t.typeName NOT IN ('attachment','note','annotation') AND i.itemID NOT IN (SELECT itemID FROM deletedItems)")
 
     def collections(self) -> list[dict[str, Any]]:
@@ -363,13 +431,16 @@ class SqliteBackend:
         return [{"key": r["key"], "name": r["collectionName"], "parent": r["pkey"] or ""} for r in rows]
 
     def search(self, query: str = "", collection: str = "", tag: str = "", limit: int = 20, with_pdf: bool = True,
-               everything: bool = False) -> list[dict[str, Any]]:
+               everything: bool = False, sort: str = "") -> list[dict[str, Any]]:
         sql, args = self._BASE, []
+        if collection:
+            cols = self.collections()
+            collection = pick_collection(collection, cols)["key"]
         fields = "'title','date','DOI','publicationTitle'" + (",'abstractNote','extra'" if everything else "")
         if collection:
             sql += (" AND i.itemID IN (SELECT ci.itemID FROM collectionItems ci JOIN collections c ON c.collectionID=ci.collectionID "
-                    "WHERE c.key=? OR lower(c.collectionName) LIKE ?)")
-            args += [collection, f"%{collection.lower()}%"]
+                    "WHERE c.key=?)")
+            args += [collection]
         if tag:
             sql += " AND i.itemID IN (SELECT it.itemID FROM itemTags it JOIN tags tg ON tg.tagID=it.tagID WHERE lower(tg.name)=?)"
             args.append(tag.lower())
@@ -380,14 +451,15 @@ class SqliteBackend:
                         f"WHERE f.fieldName IN ({fields}) AND lower(v.value) LIKE ?) "
                         "OR i.itemID IN (SELECT ic.itemID FROM itemCreators ic JOIN creators c ON c.creatorID=ic.creatorID WHERE lower(c.lastName) LIKE ? OR lower(c.firstName) LIKE ?))")
                 args += [like, like, like]
-        sql += " ORDER BY i.dateModified DESC LIMIT ?"
+        sql += (" ORDER BY i.dateAdded DESC" if sort == "dateAdded" else " ORDER BY i.dateModified DESC") + " LIMIT ?"
         args.append(limit)
         return [self._row_to_item(r, with_pdf) for r in self.conn.execute(sql, args).fetchall()]
 
     def get(self, key: str) -> dict[str, Any]:
         row = self.conn.execute(self._BASE + " AND i.key=?", (key,)).fetchone()
         if not row:
-            raise ZoteroUnavailable(f"항목 {key} 없음")
+            raise ZoteroUnavailable(f"Zotero 항목을 찾지 못했습니다(키 {key}). "
+                                    "키는 `llmwiki zotero search \"<영어 키워드>\"` 결과의 key 값(영문 대문자·숫자 8자)입니다.")
         return self._row_to_item(row)
 
 
@@ -450,7 +522,7 @@ class ExternalCliBackend:
         return [{"key": c.get("key", ""), "name": c.get("name", ""), "parent": c.get("parent", "")} for c in (data or [])]
 
     def search(self, query: str = "", collection: str = "", tag: str = "", limit: int = 20, with_pdf: bool = True,
-               everything: bool = False) -> list[dict[str, Any]]:
+               everything: bool = False, sort: str = "") -> list[dict[str, Any]]:
         data = self._run(self.cfg.get("search", ""), query=query, collection=collection, tag=tag, limit=limit)
         if isinstance(data, dict):
             data = data.get("items") or data.get("results") or [data]

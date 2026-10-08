@@ -3,7 +3,8 @@
   이 스크립트는 Codex 앱 에이전트가 INSTALL_FOR_AGENT.md 절차대로 실행한다. 학생은 [승인]만 누른다.
 
   실행(고정):  powershell -NoProfile -ExecutionPolicy Bypass -File <이 파일> -RepoUrl <저장소 주소>
-  점검만:      ... -CheckOnly
+  점검만:      ... -CheckOnly -RepoUrl <저장소 주소>   (학생 설치 문장의 첫 명령. 끝에 다음 명령을 AGENT_CMD: 줄로 알려 줌)
+  에이전트 판정: 마지막 부분의 ASCII 줄 'RESULT: …'(CHECK_OK / OK / DOCTOR_FAIL / FAIL Exx)과 'AGENT: …'만 보면 된다(QA H34).
   하는 일 (8단계, 다시 실행해도 안전 / 기존 파일은 절대 덮어쓰지 않음):
     0 폴더 점검(비어 있음 · OneDrive/문서/바탕화면 자체가 아님)  1 winget 확인  2 Git(선택, 사용자 범위)
     3 uv + Python 3.12 (관리자 권한 없음)  4 키트 받기(git clone 또는 ZIP) + 병합  5 .venv + 패키지
@@ -48,6 +49,12 @@ function Exit-WithError([string]$Code, [string]$Message, [string]$Hint) {
     Write-Line "[$Code] $Message"
     if ($Hint) { Write-Line "  해결: $Hint" }
     Write-Line "설치 중단 ❌ / 오류 코드 $Code"
+    Write-Line "RESULT: FAIL $Code"
+    if (@('E00', 'E05') -contains $Code) {
+        Write-Line "AGENT: Read the line starting with '해결:' to the student word for word and STOP. Do not retry, do not try other commands."
+    } else {
+        Write-Line "AGENT: Retry the same command ONCE. If it fails again, say: '설치가 멈췄습니다. 오류 코드 $Code - 손을 들어 이 화면을 보여 주세요.' and paste the last 20 lines. Then STOP."
+    }
     $num = 0
     [void][int]::TryParse($Code.Substring(1), [ref]$num)
     exit (10 + $num)
@@ -184,7 +191,21 @@ if ($entries.Count -gt 0 -and -not $kitHere -and -not $AllowNonEmpty) {
 }
 if ($kitHere) { Write-Line "  이미 키트가 있는 폴더 → 이어서 설치(기존 파일 보존)" } else { Write-Line "  빈 폴더 확인" }
 if ($homeDir -match '[^\x00-\x7F]') { Write-Line "  참고: 사용자 폴더 이름에 한글이 있습니다. uv·Python은 지원하지만, 문제가 생기면 오류 코드를 알려 주세요." }
-if ($CheckOnly) { Write-Line ""; Write-Line "CHECK OK - 설치를 진행해도 됩니다."; exit 0 }
+if ($CheckOnly) {
+    Write-Line ""
+    Write-Line "CHECK OK - 설치를 진행해도 됩니다."
+    Write-Line "RESULT: CHECK_OK"
+    if ($RepoUrl -and $RepoUrl -notmatch '<') {
+        $self = $PSCommandPath
+        # 다음 명령을 글자 그대로 알려 준다(에이전트가 판단할 것이 없게, QA H31·H32·H35)
+        Write-Line "AGENT: Step 2 of 2. First say to the student exactly (Korean):"
+        Write-Line "AGENT_SAY: 설치를 시작합니다(5~10분, 창을 닫지 마세요). 곧 승인 창이 뜹니다. [승인]을 누르세요. 설치 중에 화면이 어두워지며 'Windows 확인 창'이 뜨면 [예]를 누르세요. 아무 창도 안 보이는데 오래 멈춰 있으면 화면 아래 작업 표시줄에서 깜빡이는 방패 아이콘을 눌러 주세요."
+        Write-Line "AGENT: Then run this ONE command outside the sandbox (request approval/escalated, justification '설치 파일 받기', timeout 1200000 ms). Wait until it ends, even if it looks stuck:"
+        Write-Line ("AGENT_CMD: [Console]::OutputEncoding=[Text.Encoding]::UTF8; powershell -NoProfile -ExecutionPolicy Bypass -File `"{0}`" -RepoUrl `"{1}`"" -f $self, $RepoUrl.Trim())
+        Write-Line "AGENT: Then branch ONLY on the line starting with 'RESULT:' and follow the 'AGENT:' lines printed after it."
+    }
+    exit 0
+}
 # 점검을 통과한 뒤에만 폴더에 기록을 남긴다(점검 실패·CheckOnly 때는 학생 폴더에 아무것도 만들지 않음)
 $Script:LogFile = Join-Path $Target '.llmwiki-install.log'
 Write-Line ("--- 설치 시작 {0} ---" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'))
@@ -224,6 +245,7 @@ if (-not $NoUv) {
         if (Invoke-Download 'https://astral.sh/uv/install.ps1' $uvInstaller) {
             $null = Invoke-Native 'powershell' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $uvInstaller)
         }
+        Remove-Item -LiteralPath $uvInstaller -Force -ErrorAction SilentlyContinue   # QA H37: 임시 파일 남기지 않기
         Sync-SessionPath; $uv = Find-Uv
         if (-not $uv -and $winget) {
             Write-Line "  설치 스크립트 실패 → winget으로 uv 설치"
@@ -356,7 +378,19 @@ foreach ($c in $doc.checks) { if ($c.level -ne 'PASS') { Write-Line ("  [{0}] {1
 Write-Line ("  PASS {0}개 생략 · FAIL {1} · WARN {2}" -f (@($doc.checks | Where-Object { $_.level -eq 'PASS' })).Count, $doc.fail, $doc.warn)
 if (Test-Path -LiteralPath $tmpRoot) { Remove-Item -LiteralPath $tmpRoot -Recurse -Force -ErrorAction SilentlyContinue }
 Write-Line ""
+if ([int]$doc.fail -gt 0) {
+    # 종료 17: 설치는 됐지만 doctor FAIL. '다음' 안내는 찍지 않는다(QA H33)
+    Write-Line $doc.summary
+    Write-Line "RESULT: DOCTOR_FAIL"
+    Write-Line "AGENT: Do NOT rerun. Read the line '설치 미완료 ❌ / 해결할 것: …' above to the student word for word, then say: '이것을 고친 뒤 같은 설치 문장을 다시 보내 주세요(이미 받은 것은 건너뜁니다).' Then STOP."
+    exit 17
+}
 Write-Line "다음: Codex 앱에서 이 폴더로 '새 채팅'을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요."
-if ([int]$doc.fail -gt 0) { Write-Line $doc.summary; exit 17 }
 Write-Line $doc.summary
+Write-Line "RESULT: OK"
+Write-Line "AGENT: Say to the student, in this order: (1) the line starting with '설치 완료' above; (2) '새 채팅을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요.'; (3) 'Zotero를 켜고 설정 → 고급에서 다른 응용 프로그램과 통신 허용을 켠 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요.' Then STOP."
+# 받은 bootstrap 사본(임시 폴더)은 성공했을 때만 지운다 - 실패 때는 같은 명령으로 다시 실행할 수 있게(QA H37)
+if ($PSCommandPath -and ((Split-Path -Leaf $PSCommandPath) -eq 'llmwiki-bootstrap.ps1') -and ($PSCommandPath -like ([IO.Path]::GetTempPath() + '*'))) {
+    Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue
+}
 exit 0

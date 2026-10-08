@@ -13,7 +13,7 @@ New-Item -ItemType Directory -Path $Tmp | Out-Null
 try {
     $Zip = Join-Path $Tmp "kit.zip"
     $ProgressPreference = "SilentlyContinue"
-    Invoke-WebRequest -UseBasicParsing -Uri ("{0}/archive/refs/heads/{1}.zip" -f $RepoUrl.TrimEnd("/").Replace(".git", ""), $Branch) -OutFile $Zip
+    Invoke-WebRequest -UseBasicParsing -Uri ("{0}/archive/refs/heads/{1}.zip" -f ($RepoUrl.TrimEnd("/") -replace "\.git$", ""), $Branch) -OutFile $Zip
     Expand-Archive -Path $Zip -DestinationPath $Tmp -Force
     $Kit = Get-ChildItem -Path $Tmp -Directory | Select-Object -First 1
     Get-ChildItem -Path $Kit.FullName -Recurse -File | Unblock-File -ErrorAction SilentlyContinue

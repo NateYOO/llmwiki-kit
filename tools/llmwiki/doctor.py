@@ -77,7 +77,7 @@ def run(ws: Workspace | None, offline: bool = False, as_json: bool = False) -> i
                 try:
                     names = [c["name"] for c in be.collections()]
                     if coll not in names:
-                        warn("실습 컬렉션", f"'{coll}' 컬렉션이 없음 → Zotero에서 새 컬렉션 '{coll}'을 만들고 논문 PDF 2~3편을 넣으세요"
+                        warn("실습 컬렉션", f"'{coll}' 컬렉션이 없음 → Zotero에서 새 컬렉션 '{coll}'을 만들고 논문 PDF 1편 이상(1편 필수, 2편째 선택)을 넣으세요"
                              + (f" (지금 있는 컬렉션: {', '.join(names[:5])})" if names else ""))
                     else:
                         items = be.search("", coll, "", 50, with_pdf=True)
@@ -140,7 +140,7 @@ def summary_line(rows: list[tuple[str, str, str]]) -> str:
     if any(n == "Zotero 로컬 API" for n in zot):
         todo.append("Zotero 설정 1개 (Zotero 실행 + 설정→고급 '다른 응용 프로그램과 통신 허용')")
     elif any(l == "WARN" and n == "실습 컬렉션" for l, n, _ in rows):
-        todo.append("Zotero에 'llmwiki-practice' 컬렉션 만들고 PDF 2~3편 넣기")
+        todo.append("Zotero에 'llmwiki-practice' 컬렉션 만들고 논문 PDF 1편 넣기")
     net = [n for l, n, _ in rows if l == "WARN" and n in ("arXiv API", "Crossref")]
     if net:
         todo.append("인터넷 확인(선택: 서지 자동 보강용)")
