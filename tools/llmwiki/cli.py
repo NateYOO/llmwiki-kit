@@ -232,7 +232,7 @@ def _print_results(rows, as_json):
         meta = f"  ({r['kind']}, score {r['score']})" if "score" in r else ""
         print(f"- {r.get('cite', '')}{meta}  {r['path']}")
         if r.get("image"):
-            print(f"    이미지: {r['image']}" + (f" | 표 markdown: {r['markdown']}" if r.get("markdown") else ""))
+            print(f"    이미지: {r['image']}" + (" | 표 숫자는 이 PNG를 열어 확인" if r.get("kind") == "table" else ""))
         print(f"    {r.get('snippet') or r.get('context', '')}")
 
 

@@ -137,7 +137,7 @@ def extract_to_wiki(ws: Workspace, pdf: Path, *, seed: dict | None = None, slug:
         "pages": ex.page_count,
         "figures": len(ex.figures),
         "tables": len(ex.tables),
-        "tables_with_markdown": sum(1 for t in ex.tables if t.get("md")),
+        "tables_with_text": sum(1 for t in ex.tables if t.get("text")),
         "captions_found": ex.captions_found,
         "low_confidence_crops": [f"fig{f['n']}" for f in ex.figures if f.get("low_confidence") or f["method"].startswith("fallback")]
         + [f"table{t['n']}" for t in ex.tables if t.get("low_confidence") or t["method"].startswith("fallback")],

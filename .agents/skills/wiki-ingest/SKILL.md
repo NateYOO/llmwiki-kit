@@ -32,7 +32,7 @@ macOS/Linux `./llmwiki`, Windows `.\llmwiki.cmd` 로 바꿔 실행한다.
    - `slug`, `figures`, `tables`, `low_confidence_crops`, `warnings`를 기억한다.
 3. **읽기** — `wiki/papers/<slug>/` 에서
    - `meta.json`(서지·초록) → `source.md` 전체(페이지 표시 `<!-- p.N -->`) → `figures/figures.md`, `tables/tables.md`.
-   - 그림 후보 PNG를 **직접 열어 본다**(최대 5장). 표 수치는 `tables/tableN.png`로 확인한다(markdown 표는 열이 어긋날 수 있음).
+   - 그림 후보 PNG를 **직접 열어 본다**(최대 5장). **표는 PNG로만 본다**: 숫자는 `tables/tableN.png`를 직접 열어 확인한다. `meta.json` 표 항목의 `text`는 화면에 안 보이는 검색용 글자라 표를 찾는 데만 쓴다(칸이 어긋날 수 있어 숫자 근거로 쓰지 않음).
    - 텍스트가 거의 없으면(스캔 PDF 경고) 사용자에게 알리고 멈춘다.
 4. **요약 후 바로 진행** — 서지(제목·연도·제1저자·DOI)와 핵심 2–3줄, 정한 `category`를 짧게 보여 주고 **묻지 않고** 5로 넘어간다. (위키 안에 새로 쓰는 작업은 확인이 필요 없다 — AGENTS.md 5절)
 5. **리뷰 쓰기** — `wiki/papers/<slug>/review.md`의 뼈대(TODO 주석)를 채운다. 형식은 `references/wiki-format.md`, 예시는 `references/review_example.md`.
@@ -40,6 +40,7 @@ macOS/Linux `./llmwiki`, Windows `.\llmwiki.cmd` 로 바꿔 실행한다.
    - 7개 헤딩을 모두 채우고 `<!-- TODO … -->` 주석을 지운다. Evaluation의 `?/5`를 숫자로.
    - 사실 문장마다 `[근거: <slug> · p.N]` 또는 `[근거: <slug> · Table N]`.
    - 그림 블록은 dual-coding 3줄 + "원문 PDF 캡처 · 로컬 연구용". ⚠️(신뢰도 낮음) 그림은 눈으로 확인 후에만.
+   - 표 블록도 PNG 그림 + dual-coding 캡션만: `![Table 1](tables/table1.png)`. **리뷰에 markdown 표(`| … |`)를 만들거나 옮기지 않는다**(화면에 보이지 않고 lint가 WARN). 숫자 인용은 PNG에서 직접 본 것만.
    - 원문 문단을 옮기지 않는다. 한국어 서술, 용어는 원어.
 6. **마무리** — `llmwiki finish <slug>` (related --write → index → lint, 완료일 때만 log. 단계별 rc 포함)
    - 이 논문의 `## Related Papers` 자동 블록을 읽고, 실제 관계가 보이면 블록 **밖**에 `### 에이전트 해석` 1–3줄(근거 포함). 근거 없으면 쓰지 않는다.

@@ -230,6 +230,44 @@ def title_similarity(a: str, b: str) -> float:
     return len(ta & tb) / len(ta | tb)
 
 
+TABLE_NOTE_TEXT = "표는 PNG로만 보여 줘요"
+
+
+def table_md_to_text(md: str) -> str:
+    """자동 추출 markdown 표 → 검색용 글자(행마다 한 줄, 칸은 ' · '). 화면에는 보이지 않는 검색 전용 데이터."""
+    import html as _html
+    rows = []
+    for line in md.replace("\r\n", "\n").split("\n"):
+        s = line.strip()
+        if not s.startswith("|") or re.fullmatch(r"\|?[\s:|-]+\|?", s):
+            continue
+        cells = [c.strip() for c in s.strip("|").split("|")]
+        cells = [_html.unescape(_html.unescape(c)) for c in cells]
+        cells = [re.sub(r"<br\s*/?>", " ", c, flags=re.I) for c in cells]
+        cells = [re.sub(r"\s+", " ", c.replace("**", "")).strip() for c in cells]
+        cells = [c for c in cells if c]
+        if cells:
+            rows.append(" · ".join(cells))
+    return "\n".join(rows)
+
+
+def table_search_text(paper_dir: Path, t: dict) -> str:
+    """meta.json 표 항목의 검색용 글자. 새 형식은 t['text'], 예전 형식은 tables/tableN.md를 읽어 바꾼다(파일은 고치지 않음)."""
+    if t.get("text"):
+        return str(t["text"])
+    md = t.get("md")
+    if md and (paper_dir / md).exists():
+        try:
+            return table_md_to_text((paper_dir / md).read_text(encoding="utf-8", errors="replace"))
+        except OSError:
+            return ""
+    return ""
+
+
+def is_pipe_table_line(line: str) -> bool:
+    return line.lstrip().startswith("|") and line.count("|") >= 2
+
+
 def dump_json(obj: Any) -> str:
     return json.dumps(obj, ensure_ascii=False, indent=2)
 

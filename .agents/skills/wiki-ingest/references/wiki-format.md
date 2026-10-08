@@ -55,7 +55,7 @@ review_date: "YYYY-MM-DD"
 - **표준 마크다운 상대 경로 링크만 쓴다.** 위키링크 `[[…]]`는 쓰지 않는다(Obsidian이 없어도 GitHub·VS Code·Codex에서 열리게).
   - 리뷰 → 리뷰: `[제목](../<slug>/review.md)` · 주제 → 리뷰: `[제목](../papers/<slug>/review.md)`
   - index → 리뷰: `[제목](papers/<slug>/review.md)` · drafts → 리뷰: `[제목](../wiki/papers/<slug>/review.md)`
-- 그림: `![Figure 2](figures/fig2.png)` (리뷰 기준 상대 경로). 표: `![Table 1](tables/table1.png)`.
+- 그림: `![Figure 2](figures/fig2.png)` (리뷰 기준 상대 경로). 표: `![Table 1](tables/table1.png)` — **표는 PNG로만**, markdown 표(`| … |`)는 쓰지 않는다.
 - 새 페이지를 만들면 반드시 index에 걸리게 하고(`llmwiki index`), 관련 페이지끼리 서로 링크한다.
 
 ## 4. 그림 규칙 (dual-coding)
@@ -69,6 +69,16 @@ Essence·Achievement·How에 각각 최대 1장. PNG를 **직접 열어 보고**
 - 텍스트만 읽으면 놓치는 것: …
 ```
 자동 크롭이 잘못됐으면(⚠️ 표시, 잘림, 엉뚱한 영역) 그 그림은 쓰지 말고 사용자에게 알린다.
+
+**표도 같은 형식**(PNG + dual-coding 캡션)으로만 넣는다. 자동 추출 표 글자는 칸이 어긋날 수 있어 화면 어디에도 보여 주지 않는다(`meta.json`의 `text`는 검색용). 리뷰에 markdown 표를 옮기지 않고, 숫자는 `tables/tableN.png`를 직접 보고 확인한 것만 문장으로 쓴다.
+```
+![Table 1](tables/table1.png)
+
+*Table 1. <원문 캡션 앞부분>* — 원문 PDF 캡처 · 로컬 연구용
+- 무엇이 보이는가: …
+- 어떻게 읽을까: …
+- 텍스트만 읽으면 놓치는 것: …
+```
 
 ## 5. 근거·인용 규칙
 - 사실 주장마다 근거 꼬리표를 단다: `[근거: <slug> · p.N]`(source.md의 `<!-- p.N -->` 페이지), `[근거: <slug> · Table 2]`, `[근거: <slug> · Achievement]`(리뷰 섹션).
@@ -104,6 +114,7 @@ tags: [topic]
 | duplicate-doi / duplicate-arxiv | 같은 논문 두 번 | 사용자에게 어느 쪽을 남길지 **확인 후** 정리 |
 | related-asym | A→B는 있는데 B→A 없음 | `llmwiki related --write` |
 | figures | 리뷰에 그림 없음·PNG 누락·신뢰도 낮은 크롭·출처 표기 없음 | 그림 PNG 열어 보고 추가/교체 |
+| table-md | 리뷰에 markdown 표가 있음(화면에는 안 보임) | 그 표를 지우고 `![Table N](tables/tableN.png)` + 캡션으로 바꾸기 |
 | verbatim | 원문과 긴 연속 일치(복사 의심) | 한국어로 다시 요약, 인용은 2문장 이하 |
 | log | log 헤더 형식 불일치 | 새 항목부터 형식 지키기(과거 기록은 고치지 않음) |
 - 안전한 자동 수정: `llmwiki lint --fix` = 관련 링크 재계산(`related --write`) + `index` 재생성 후 다시 검사. 리뷰 본문은 바꾸지 않는다.

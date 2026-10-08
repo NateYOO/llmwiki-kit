@@ -15,7 +15,8 @@ from pathlib import Path
 from typing import Any
 
 from .mdhtml import convert, slug_id
-from .util import RELATED_END, RELATED_START, Workspace, project_mds, read_text, split_frontmatter, today
+from .util import RELATED_END, RELATED_START, Workspace, project_mds, read_text, split_frontmatter, table_search_text, today
+from .wikiops import tables_listing
 from urllib.parse import quote as _quote, unquote as _unquote
 
 
@@ -118,7 +119,7 @@ class Builder:
     <a class="brand" href="{root}index.html"><span class="logo">📚</span><span><b>내 논문 위키</b><small>나만의 지식 파트너</small></span></a>
     <nav class="nav">{nav_html}</nav>
     <div class="search js-only">
-      <input id="q" type="search" placeholder="검색: 제목·저자·리뷰·그림 설명" autocomplete="off" aria-label="위키 검색">
+      <input id="q" type="search" placeholder="검색: 제목·저자·리뷰·그림·표 설명" autocomplete="off" aria-label="위키 검색">
       <div id="results" class="results" hidden></div>
     </div>
     <button class="ask js-only" type="button" data-ask="{E(ask, quote=True)}" title="Codex 채팅에 붙여넣을 문장을 복사합니다">💬 Codex에게 물어보기</button>
@@ -312,7 +313,10 @@ class Builder:
         toc: list = []
         body_md = re.sub(r"^#\s+.+\n", "", p.body.lstrip(), count=1)  # 제목은 머리 카드에
         body_md = body_md.replace(RELATED_START, "").replace(RELATED_END, "")
-        content = convert(body_md, self.linker(p.review, rel), toc)
+        has_tables = (p.dir / "tables" / "tables.md").exists() or bool(p.meta.get("tables"))
+        note = ('<p class="table-hidden muted small">📊 여기 있던 markdown 표는 화면에 보여 주지 않아요(자동 추출 표는 칸이 어긋날 수 있어요). '
+                + ('표는 <a href="tables/tables.html">표 목록</a>의 PNG로 보세요.' if has_tables else '표는 원문 PDF에서 확인하세요.') + '</p>')
+        content = convert(body_md, self.linker(p.review, rel), toc, table_note=note)
         content = self.cite_links(content, rel)
         fm = p.fm
         authors = fm.get("authors") or p.meta.get("authors") or []
@@ -414,17 +418,24 @@ class Builder:
             for f in sorted(d.iterdir()):
                 if f.suffix.lower() in IMG_EXT:
                     self.copy(f, f"papers/{p.slug}/{sub}/{f.name}")
-                elif f.suffix == ".md":
+                elif f.suffix == ".md" and f.name in ("figures.md", "tables.md"):  # 예전 tableN.md(markdown 표)는 화면에 만들지 않음
                     orel = f"papers/{p.slug}/{sub}/{f.stem}.html"
                     toc2: list = []
                     md = read_text(f)
+                    if f.name == "tables.md" and p.meta.get("tables"):
+                        md = tables_listing(p.meta)  # 표 화면은 meta.json으로 다시 만든다: PNG + 캡션만(예전 tables.md의 markdown 링크·표는 안 보임, 파일은 그대로)
                     self.page(orel, f"{p.title} — {f.stem}", f'<p class="crumb"><a href="../index.html">← 리뷰로</a></p><article class="md">'
-                              + convert(md, self.linker(f, orel), toc2) + "</article>",
+                              + convert(md, self.linker(f, orel), toc2, table_note="") + "</article>",
                               ask=f"$wiki-query <질문을 여기에> (참고: wiki/papers/{p.slug}/{sub}/{f.name})", body_class="figs")
                     if f.name == "figures.md":
                         for m in re.finditer(r"^##\s+(Figure\s+\d+)[^\n]*\n(.*?)(?=^##\s|\Z)", md, re.M | re.S):
                             cap = _plain(m.group(2))
                             self.index.append({"k": "그림", "t": f"{p.title} › {m.group(1)}", "u": f"{orel}#{slug_id(m.group(0).splitlines()[0][3:])}", "x": cap[:1500]})
+                    if f.name == "tables.md":  # 표: 캡션 + 화면에 안 보이는 검색용 표 글자
+                        for t in p.meta.get("tables") or []:
+                            head = f"Table {t['n']} (p.{t['page']})" + (" ⚠️ 자동 크롭 신뢰도 낮음 — PNG 확인" if str(t.get("method", "")).startswith("fallback") else "")
+                            self.index.append({"k": "표", "t": f"{p.title} › Table {t['n']}", "u": f"{orel}#{slug_id(head)}",
+                                               "x": unicodedata.normalize("NFKC", str(t.get("caption") or "") + " " + table_search_text(p.dir, t).replace("\n", " · "))[:3000]})
 
     def build_source(self, p, src: Path) -> None:
         rel = f"papers/{p.slug}/source.html"

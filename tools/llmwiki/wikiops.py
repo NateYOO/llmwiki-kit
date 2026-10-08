@@ -239,15 +239,11 @@ def figures_listing(meta: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
-def tables_listing(meta: dict, tables_dir: Path) -> str:
-    lines = [f"# 표 목록 — {meta.get('title', '')}", "", "> 자동 생성. PNG가 정본이고 markdown은 검색·인용 보조용(열이 어긋날 수 있음).", ""]
+def tables_listing(meta: dict, tables_dir: Path | None = None) -> str:
+    lines = [f"# 표 목록 — {meta.get('title', '')}", "", "> 자동 생성. 표는 PNG로만 보여 줘요(숫자는 PNG에서 확인). 원문 PDF 캡처 · 로컬 연구용. 캡션은 원문 그대로.", ""]
     for t in meta.get("tables") or []:
         flag = " ⚠️ 자동 크롭 신뢰도 낮음 — PNG 확인" if t.get("method", "").startswith("fallback") else ""
-        lines += [f"## Table {t['n']} (p.{t['page']}){flag}", "", f"![Table {t['n']}]({Path(t['png']).name})", ""]
-        if t.get("md"):
-            lines += [f"markdown: [table{t['n']}.md]({Path(t['md']).name})", ""]
-        else:
-            lines += [f"_{t.get('md_note', 'markdown 없음')}_", ""]
+        lines += [f"## Table {t['n']} (p.{t['page']}){flag}", "", f"![Table {t['n']}]({Path(t['png']).name})", "", f"*{t.get('caption', '')}*", ""]
     if not meta.get("tables"):
         lines.append("_추출된 표가 없습니다._")
     return "\n".join(lines) + "\n"

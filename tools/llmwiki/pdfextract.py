@@ -1,4 +1,4 @@
-"""PDF 추출: 본문 텍스트(페이지 표시), 그림·그래프(캡션 포함 영역 PNG), 표(PNG + markdown).
+"""PDF 추출: 본문 텍스트(페이지 표시), 그림·그래프(캡션 포함 영역 PNG), 표(PNG, 표 글자는 검색용으로 meta.json에만).
 
 방식은 sources.md §1.5·§4.3에 기록된 아이디어(캡션 정규식 → 그래픽 영역 합치기 → 영역 렌더)를
 참고해 이 저장소에서 구현했다. Based on Paper Curation by 이제현 (https://github.com/jehyunlee/paper-curation)
@@ -10,6 +10,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+from .util import table_md_to_text
 
 import os
 
@@ -418,14 +420,12 @@ def extract_pdf(pdf_path: Path, out_dir: Path, *, max_figures: int = 20, max_tab
                 fname = f"table{c.num}"
                 info = _render(page, rect, tab_dir / f"{fname}.png")
                 entry = {"n": c.num, "page": c.page + 1, "caption": c.text, "png": f"tables/{fname}.png", "method": method, **info}
-                if md.strip():
-                    (tab_dir / f"{fname}.md").write_text(
-                        f"<!-- 자동 추출 표: 열이 합쳐지거나 어긋날 수 있음. 정확한 값은 {fname}.png 확인 -->\n\n**{c.text}**\n\n{md.strip()}\n",
-                        encoding="utf-8",
-                    )
-                    entry["md"] = f"tables/{fname}.md"
+                # 표는 PNG로만 보여 준다. 자동 추출 글자는 화면에 안 보이는 검색용 데이터로 meta.json에만 둔다.
+                text = table_md_to_text(md) if md.strip() else ""
+                if text:
+                    entry["text"] = text
                 else:
-                    entry["md_note"] = "markdown 자동 추출 실패(이미지 표이거나 선 없는 표). PNG를 보고 필요한 값만 리뷰에 옮길 것"
+                    entry["text_note"] = "표 글자 자동 추출 실패(이미지 표이거나 선 없는 표). PNG를 보고 확인"
                 ex.tables.append(entry)
         except Exception as e:  # noqa: BLE001 - 그림 하나 실패로 전체를 멈추지 않는다
             ex.warnings.append(f"{c.kind} {c.num} (p.{c.page + 1}) 렌더 실패: {e}")

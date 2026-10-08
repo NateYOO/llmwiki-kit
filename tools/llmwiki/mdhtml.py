@@ -71,8 +71,9 @@ def _cells(row: str) -> list[str]:
     return [c.strip() for c in re.split(r"(?<!\\)\|", row)]
 
 
-def convert(md: str, link: LinkFn | None = None, toc: list | None = None) -> str:
-    """마크다운 문자열 → HTML 조각. toc 리스트를 주면 (level, id, text)를 채운다."""
+def convert(md: str, link: LinkFn | None = None, toc: list | None = None, table_note: str | None = None) -> str:
+    """마크다운 문자열 → HTML 조각. toc 리스트를 주면 (level, id, text)를 채운다.
+    table_note를 주면 markdown 표(| 로 시작하는 줄 2줄 이상)를 그리지 않고 그 안내(HTML)로 바꾼다(빈 문자열이면 그냥 숨김)."""
     md = _COMMENT.sub("", md.replace("\r\n", "\n"))
     lines = md.split("\n")
     out: list[str] = []
@@ -121,6 +122,13 @@ def convert(md: str, link: LinkFn | None = None, toc: list | None = None) -> str
             flush()
             out.append("<hr>")
             i += 1
+            continue
+        if table_note is not None and line.lstrip().startswith("|") and i + 1 < len(lines) and lines[i + 1].lstrip().startswith("|"):
+            flush()
+            while i < len(lines) and lines[i].lstrip().startswith("|"):
+                i += 1
+            if table_note:
+                out.append(table_note)
             continue
         if line.lstrip().startswith("|") and i + 1 < len(lines) and _TABLE_SEP.match(lines[i + 1]):
             flush()

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from . import SCHEMA_VERSION
-from .util import RELATED_END, RELATED_HEADING, RELATED_START, REVIEW_HEADINGS, Workspace, project_mds, read_text, split_frontmatter
+from .util import RELATED_END, RELATED_HEADING, RELATED_START, REVIEW_HEADINGS, Workspace, is_pipe_table_line, project_mds, read_text, split_frontmatter
 from .wikiops import SKIP_NAMES, TODO_RE, get_section, iter_links, load_papers, resolve_link, strip_comments
 
 REQUIRED_FM = ["title", "authors", "year", "slug", "category", "tags", "essence", "status", "schema_version",
@@ -140,6 +140,16 @@ def run(ws: Workspace) -> list[Issue]:
             if "figures/" in t and "원문 PDF 캡처" not in p.body:
                 add("WARN", "figures", rp, "그림 출처 표기('원문 PDF 캡처 · 로컬 연구용')가 없음")
                 break
+        # 표는 PNG로만: 리뷰 안 markdown 표(| 로 시작하는 줄 2줄 연속, 코드 블록 밖)
+        _in_code, _prev = False, False
+        for _ln in strip_comments(p.body).split("\n"):
+            if _ln.lstrip().startswith("```"):
+                _in_code = not _in_code
+            _cur = not _in_code and is_pipe_table_line(_ln)
+            if _cur and _prev:
+                add("WARN", "table-md", rp, "표는 PNG로만 보여 줘요 — 리뷰의 markdown 표를 지우고 그림 링크를 쓰세요(예: ![Table 1](tables/table1.png))")
+                break
+            _prev = _cur
         # 원문 덤프 의심: 영어 12단어 연속 일치가 많으면
         src = p.dir / "source.md"
         if src.exists():

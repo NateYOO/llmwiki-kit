@@ -124,7 +124,7 @@
         167
       ],
       "low_confidence": false,
-      "md_note": "markdown 자동 추출 실패(이미지 표이거나 선 없는 표). PNG를 보고 필요한 값만 리뷰에 옮길 것"
+      "text_note": "표 글자 자동 추출 실패(이미지 표이거나 선 없는 표). PNG를 보고 확인"
     },
     {
       "n": 2,
@@ -143,7 +143,7 @@
         181
       ],
       "low_confidence": false,
-      "md_note": "markdown 자동 추출 실패(이미지 표이거나 선 없는 표). PNG를 보고 필요한 값만 리뷰에 옮길 것"
+      "text_note": "표 글자 자동 추출 실패(이미지 표이거나 선 없는 표). PNG를 보고 확인"
     },
     {
       "n": 3,
@@ -162,7 +162,7 @@
         125
       ],
       "low_confidence": false,
-      "md_note": "markdown 자동 추출 실패(이미지 표이거나 선 없는 표). PNG를 보고 필요한 값만 리뷰에 옮길 것"
+      "text_note": "표 글자 자동 추출 실패(이미지 표이거나 선 없는 표). PNG를 보고 확인"
     },
     {
       "n": 4,
@@ -181,7 +181,7 @@
         163
       ],
       "low_confidence": false,
-      "md_note": "markdown 자동 추출 실패(이미지 표이거나 선 없는 표). PNG를 보고 필요한 값만 리뷰에 옮길 것"
+      "text_note": "표 글자 자동 추출 실패(이미지 표이거나 선 없는 표). PNG를 보고 확인"
     },
     {
       "n": 5,
@@ -200,7 +200,7 @@
         160
       ],
       "low_confidence": false,
-      "md": "tables/table5.md"
+      "text": "Usage pattern · Num Users · Pre-Test · Post-Test · Absolute Gain · Relative Gain\nBalanced · 11 · 1.64 ± 0.48 · 3.27 ± 0.57 · 1.64 ± 0.32 · 0.45 ± 0.10\nRead + Conv. · 13 · 1.62 ± 0.35 · 3.77 ± 0.47 · 2.15 ± 0.37 · 0.53 ± 0.09\nConv. Focused · 4 · 0.62 ± 0.24 · 4.12 ± 0.52 · 3.50 ± 0.46 · 0.65 ± 0.09\nHelp Focused · 3 · 0.67 ± 0.33 · 2.17 ± 0.44 · 1.50 ± 0.50 · 0.28 ± 0.09"
     },
     {
       "n": 6,
@@ -219,7 +219,7 @@
         176
       ],
       "low_confidence": false,
-      "md": "tables/table6.md"
+      "text": "Feeature · Pre-Test · Post-Test · Absolute Gain · Relative Gain\n# User Messages · -0.06 (p = 0.75) · 0.12 (p = 0.54) · 0.22 (p = 0.24) · 0.11 (p = 0.54)\n# Help Requests · -0.14 (p = 0.44) · -0.35 (p = 0.05) · -0.32 (p = 0.08) · -0.34 (p = 0.06)\n# Revisions · -0.35 (p < 0.05) · -0.20 (p = 0.27) · 0.10 (p = 0.58) · -0.13 (p = 0.50)\n# Words · 0.24 (p = 0.19) · 0.38 (p = 0.04) · 0.26 (p = 0.17) · 0.40 (p = 0.02)\nLearning Time (min) · -0.17 (p = 0.34) · 0.16 (p = 0.35) · 0.39 (p = 0.02) · 0.26 (p = 0.13)"
     }
   ],
   "captions_found": {

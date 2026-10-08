@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .textindex import BM25, tokenize
-from .util import Workspace, read_text, split_frontmatter
+from .util import Workspace, read_text, split_frontmatter, table_search_text
 from .wikiops import load_papers, strip_comments
 
 PAGE_RE = re.compile(r"<!--\s*p\.(\d+)\s*-->")
@@ -82,7 +82,8 @@ def _figure_chunks(ws: Workspace) -> list[Chunk]:
         for f in p.meta.get("figures") or []:
             out.append(Chunk(p.dir / f["file"], p.slug, f"Figure {f['n']}, p.{f['page']}", f["caption"], "figure", {"page": f["page"]}))
         for t in p.meta.get("tables") or []:
-            out.append(Chunk(p.dir / t["png"], p.slug, f"Table {t['n']}, p.{t['page']}", t["caption"], "table", {"page": t["page"], "md": t.get("md", "")}))
+            txt = table_search_text(p.dir, t)  # 화면에 안 보이는 검색용 표 글자(숫자는 PNG에서 확인)
+            out.append(Chunk(p.dir / t["png"], p.slug, f"Table {t['n']}, p.{t['page']}", t["caption"] + ("\n" + txt if txt else ""), "table", {"page": t["page"]}))
         # 리뷰 안에서 그림 아래에 쓴 해설(dual-coding)도 찾을 수 있게
     return out
 
@@ -133,8 +134,8 @@ def search(ws: Workspace, query: str, scope: str = "wiki", top: int = 8) -> list
                 "cite": cite_tag(c), "snippet": _snippet(c.text, [t for t in qt if t.isascii()] + qt)}
         if c.kind in ("figure", "table"):
             item["image"] = ws.rel(c.path)
-            if c.extra.get("md"):
-                item["markdown"] = ws.rel(ws.paper_dir(c.slug) / c.extra["md"])
+            if c.kind == "table":
+                item["note"] = "표는 PNG로만 봐요. 검색어는 표 안 글자에서 찾았을 수 있어요 — 숫자는 image(PNG)를 열어 확인"
         res.append(item)
     return res
 

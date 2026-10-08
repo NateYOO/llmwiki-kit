@@ -51,7 +51,14 @@ review_date: "2026-10-08"
 
 ## Achievement
 
-1. **학습 성과**: … (Table 1) [근거: <slug> · Table 1]
+![Table 1](tables/table1.png)
+
+*Table 1. <원문 캡션 앞부분>* — 원문 PDF 캡처 · 로컬 연구용
+- 무엇이 보이는가: …
+- 어떻게 읽을까: …
+- 텍스트만 읽으면 놓치는 것: …
+
+1. **학습 성과**: … (Table 1, 숫자는 PNG에서 확인) [근거: <slug> · Table 1]
 2. **사용 경험**: … [근거: <slug> · Table 2]
 
 ## How
