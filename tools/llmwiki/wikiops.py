@@ -273,7 +273,7 @@ def build_index_block(ws: Workspace) -> str:
             summary = (fm or {}).get("summary", "")
             lines.append(f"- [{title}](topics/{t.name})" + (f" — {summary}" if summary else ""))
     else:
-        lines.append("_아직 주제 페이지가 없습니다. 논문이 3편 이상 모이면 wiki-lint/wiki-query로 묶어 보세요._")
+        lines.append("_아직 주제 페이지가 없습니다. 논문이 3편 이상 모이면 「$wiki-synthesize 주제탐색」으로 묶어 보세요._")
     lines.append("")
     groups: dict[str, list[Paper]] = {}
     for p in papers:

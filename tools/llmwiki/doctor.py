@@ -43,7 +43,7 @@ def run(ws: Workspace | None, offline: bool = False, as_json: bool = False) -> i
     else:
         ok("작업 폴더", str(ws.root))
         for rel in ("AGENTS.md", "wiki/index.md", "wiki/log.md", ".agents/skills/wiki-ingest/SKILL.md",
-                    ".agents/skills/wiki-query/SKILL.md", ".agents/skills/wiki-lint/SKILL.md", ".agents/skills/wiki-synthesize/SKILL.md"):
+                    ".agents/skills/wiki-query/SKILL.md", ".agents/skills/wiki-synthesize/SKILL.md"):
             (ok if (ws.root / rel).exists() else fail)(rel, "" if (ws.root / rel).exists() else "없음 → 키트를 다시 복사(llmwiki init)")
         agents = ws.root / "AGENTS.md"
         if agents.exists():

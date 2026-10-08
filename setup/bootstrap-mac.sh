@@ -171,6 +171,12 @@ if [ -n "$KIT" ]; then
   done < <(find "$KIT" -type f -print0)
   say "  복사 ${COPIED}개 · 이미 있어서 건너뜀 ${SKIPPED}개"
 fi
+# 이어서 설치: 예전 키트의 wiki-lint 스킬 폴더만 정리(이 경로 하나만, 링크면 건드리지 않음).
+# 폴더의 doctor가 아직 wiki-lint를 찾는 예전 판이면 지우지 않는다(지우면 doctor FAIL).
+OLDLINT="$TARGET/.agents/skills/wiki-lint"
+if [ -d "$OLDLINT" ] && [ ! -L "$OLDLINT" ] && ! grep -q 'wiki-lint/SKILL.md' "$TARGET/tools/llmwiki/doctor.py" 2>/dev/null; then
+  rm -rf -- "$OLDLINT" && say "  예전 wiki-lint 스킬 폴더를 정리했어요(llmwiki lint 명령은 그대로 써요)."
+fi
 for need in AGENTS.md tools/llmwiki/cli.py setup/requirements.txt .agents/skills/wiki-ingest/SKILL.md; do
   [ -f "$TARGET/$need" ] || die E05 "필수 파일이 없습니다: $need" "같은 문장을 다시 보내 주세요(이미 받은 파일은 보존됩니다)."
 done

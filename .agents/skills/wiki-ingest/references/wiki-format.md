@@ -76,3 +76,37 @@ Essence·Achievement·How에 각각 최대 1장. PNG를 **직접 열어 보고**
 - 원문 직접 인용은 한 번에 2문장 이하, `>` 인용 블록 + 페이지 표기. **원문을 통째로(문단 단위로) 옮기지 않는다** — source.md는 검색·확인용이다.
 - 위키에 근거가 없으면 지어내지 말고 "위키에 근거 없음"이라고 말한 뒤 ingest를 제안한다. 추측·아이디어는 `(가설)`로 표시한다.
 
+## 6. 주제 페이지 형식 (`wiki/topics/<영문-소문자-하이픈>.md`)
+```
+---
+title: "주제 이름"
+summary: "한 줄 요약"
+tags: [topic]
+---
+# 주제 이름
+## 핵심 정리   (각 문장에 [근거: …])
+## 논문
+- [제목](../papers/<slug>/review.md) — 이 주제에서의 역할
+## 열린 질문
+```
+만든 뒤 `llmwiki related --write` → `llmwiki index`.
+
+## 7. 점검: `llmwiki lint` 결과 읽고 고치기 (스킬 파일 없음)
+「점검해 줘」「링크 연결해 줘」라고 하면 `llmwiki lint`(자세히는 `--json`)를 실행하고 결과를 설명한다.
+| code | 뜻 | 고치는 법 |
+|---|---|---|
+| frontmatter | 필수 키·형식·slug 불일치·중첩 속성 | review.md frontmatter 수정 (2절) |
+| headings / empty-section / todo | 7개 헤딩 누락·순서·빈 섹션·TODO 남음 | 리뷰 보완 (원문 근거 확인 후) |
+| score | 1–5 정수 아님, 본문과 frontmatter 불일치, `?/5` | 숫자 맞추기 |
+| broken-link | 없는 파일로 가는 링크·이미지 | 경로 수정 (3절) |
+| orphan | index.md에 없음 | `llmwiki index` |
+| isolated | 다른 논문·주제에서 들어오는 링크 없음 | related 갱신, 주제 페이지에 링크 |
+| duplicate-doi / duplicate-arxiv | 같은 논문 두 번 | 사용자에게 어느 쪽을 남길지 **확인 후** 정리 |
+| related-asym | A→B는 있는데 B→A 없음 | `llmwiki related --write` |
+| figures | 리뷰에 그림 없음·PNG 누락·신뢰도 낮은 크롭·출처 표기 없음 | 그림 PNG 열어 보고 추가/교체 |
+| verbatim | 원문과 긴 연속 일치(복사 의심) | 한국어로 다시 요약, 인용은 2문장 이하 |
+| log | log 헤더 형식 불일치 | 새 항목부터 형식 지키기(과거 기록은 고치지 않음) |
+- 안전한 자동 수정: `llmwiki lint --fix` = 관련 링크 재계산(`related --write`) + `index` 재생성 후 다시 검사. 리뷰 본문은 바꾸지 않는다.
+- 기계가 못 보는 것도 리뷰를 읽어 짚는다(지적마다 근거 꼬리표): 모순(조건이 다른지 확인) · 낡은 주장 · 2편 이상에 나오는데 주제 페이지가 없는 개념(6절 형식으로 제안) · 연결 보강(실제 관계가 분명한 것만 `### 에이전트 해석`에 근거와 함께, 자동 블록은 손대지 않음) · category 이름 흩어짐 · ⚠️ 그림 검수.
+- 고칠 목록(파일·내용)을 먼저 보여 주고 확인을 받는다. 삭제·병합은 반드시 확인. 사용자 글(`drafts/`·`projects/`)은 고치지 않는다.
+- 고친 뒤 `llmwiki related --write` → `llmwiki index` → `llmwiki lint` 다시 → ERROR/WARN 개수(전→후)를 알리고 `llmwiki log lint "점검 요약" --note "ERROR a→b, WARN c→d"`.

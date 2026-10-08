@@ -9,11 +9,11 @@
 | 요청 예 | 스킬 파일 |
 |---|---|
 | ingest, 넣어줘, 추가, 리뷰 써줘, Zotero에서 가져와, 이 PDF | `.agents/skills/wiki-ingest/SKILL.md` |
-| query, 질문, 정말 있나, 비교, 아이디어, 확장, 반론, 깊게 조사, 문구·그림 찾기, 이어서 써줘 | `.agents/skills/wiki-query/SKILL.md` |
-| lint, 점검, 링크 연결, 고아·중복 | `.agents/skills/wiki-lint/SKILL.md` |
-| synthesize, 서론 초안, 주제 탐색, 결합, 공통 한계, 이웃·허브·군집(네트워크) | `.agents/skills/wiki-synthesize/SKILL.md` |
+| query, 질문, 정말 있나, 비교, 아이디어, 확장, 반론, 깊게 조사, 문구·그림 찾기 (채팅 답만, 파일은 안 만듦) | `.agents/skills/wiki-query/SKILL.md` |
+| 점검·링크 연결 | `llmwiki lint` 실행 후 결과 설명 (스킬 파일 없음, 코드별 고치는 법은 `wiki-format.md` 7절) |
+| synthesize, 서론 초안, 주제 탐색, 결합, 공통 한계, 이웃·허브·군집(네트워크), 이어서 써줘(기존 .md에 덧붙이기) | `.agents/skills/wiki-synthesize/SKILL.md` |
 | query로 대화 → 정리되면 synthesize로 문서(「이 대화 문서로 정리해 줘」, 제안에 「응」「만들어 줘」) | `.agents/skills/wiki-query/SKILL.md` → `.agents/skills/wiki-synthesize/SKILL.md` |
-리뷰·주제 페이지를 쓸 때 형식 상세: `.agents/skills/wiki-ingest/references/wiki-format.md`.
+리뷰·주제 페이지를 쓸 때 형식 상세와 lint 결과 읽기: `.agents/skills/wiki-ingest/references/wiki-format.md`.
 
 ## 2. 폴더
 - `wiki/index.md` 목차(**작업 전 먼저 읽기**) · `wiki/log.md` 기록(덧붙이기만) · `wiki/papers/<slug>/` review.md·source.md·meta.json·figures/·tables/ · `wiki/topics/` · `drafts/` 사용자 글·초안 · `projects/<주제이름>/` 사용자 연구 주제 폴더(초안·한글·엑셀, `drafts/`처럼 사용자 영역) · `raw/` Zotero 밖 PDF · `examples/sample-wiki/` 복구용(`llmwiki sample`).
@@ -36,7 +36,7 @@
 ## 5. 안전
 1. 유료 API 키를 요구·호출하는 코드를 만들거나 실행하지 않는다. 리뷰·요약은 에이전트가 직접 쓴다.
 2. `wiki/` 안에 새로 쓰는 작업(ingest·리뷰·주제·index·log)과 `drafts/`·`projects/<주제이름>/`에 **새 파일** 만들기(주제 폴더 새로 만들기 포함)는 확인 없이 진행한다. **확인이 필요한 것**: 기존 노트·파일의 삭제나 덮어쓰기, `wiki/`·`drafts/`·`projects/` 밖의 파일 수정.
-3. 사용자 글(`drafts/`·`projects/`의 기존 파일 — 한글(HWP)·엑셀 포함)은 고치지 않는다(이어쓰기는 .md에 덧붙이기). Zotero와 PDF는 읽기만 한다.
+3. 사용자 글(`drafts/`·`projects/`의 기존 파일 — 한글(HWP)·엑셀 포함)은 고치지 않는다. 예외는 하나: 사용자가 그 파일을 이어 써 달라고 했을 때만 `$wiki-synthesize 이어쓰기`가 `.md` 끝에 덧붙인다(기존 문장은 지우거나 고치지 않음). Zotero와 PDF는 읽기만 한다.
 4. 명령이 실패하면 오류를 그대로 보여 주고 `llmwiki doctor`로 원인을 설명한다. 우회 코드를 짜지 않는다. 같은 오류가 두 번이면 멈춘다.
 5. Zotero API를 `curl`·`Invoke-RestMethod`로 직접 부르지 않는다(`llmwiki zotero`만). PowerShell 5.1에서 `>`로 파일 저장 금지(UTF-16이 됨).
 6. 인터넷이 필요한 명령이나 `.agents/` 쓰기 직전에는 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 먼저 말한다.

@@ -343,6 +343,18 @@ if ($kit) {
     Write-Line ("  복사 {0}개 · 이미 있어서 건너뜀 {1}개" -f $res.Copied, $res.Skipped)
     foreach ($a in $res.Alt) { Write-Line "  기존 파일과 달라서 옆에 둠: $a (합칠지는 사람이 결정)" }
 }
+# 이어서 설치: 예전 키트의 wiki-lint 스킬 폴더만 정리(이 경로 하나만, 링크·연결 지점이면 건드리지 않음).
+# 폴더의 doctor가 아직 wiki-lint를 찾는 예전 판이면 지우지 않는다(지우면 doctor FAIL).
+$oldLint = Join-Path $Target '.agents\skills\wiki-lint'
+$doctorPy = Join-Path $Target 'tools\llmwiki\doctor.py'
+if (Test-Path -LiteralPath $oldLint -PathType Container) {
+    $oldItem = Get-Item -LiteralPath $oldLint -Force
+    $oldDoctor = (Test-Path -LiteralPath $doctorPy) -and (Select-String -LiteralPath $doctorPy -SimpleMatch 'wiki-lint/SKILL.md' -Quiet)
+    if (-not ($oldItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -and -not $oldDoctor) {
+        try { Remove-Item -LiteralPath $oldLint -Recurse -Force -ErrorAction Stop; Write-Line "  예전 wiki-lint 스킬 폴더를 정리했어요(llmwiki lint 명령은 그대로 써요)." }
+        catch { Write-Line "  예전 wiki-lint 스킬 폴더를 지우지 못했어요(설치에는 지장 없음): $($_.Exception.Message)" }
+    }
+}
 foreach ($need in @('AGENTS.md', 'tools\llmwiki\cli.py', 'setup\requirements.txt', '.agents\skills\wiki-ingest\SKILL.md')) {
     if (-not (Test-Path -LiteralPath (Join-Path $Target $need))) { Exit-WithError -Code 'E05' -Message "필수 파일이 없습니다: $need" -Hint "같은 문장을 다시 보내 주세요(이미 받은 파일은 보존됩니다)." }
 }

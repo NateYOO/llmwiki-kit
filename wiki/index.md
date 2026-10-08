@@ -6,7 +6,7 @@
 <!-- llmwiki:index:start -->
 ## 주제 (topics)
 
-_아직 주제 페이지가 없습니다. 논문이 3편 이상 모이면 wiki-lint/wiki-query로 묶어 보세요._
+_아직 주제 페이지가 없습니다. 논문이 3편 이상 모이면 「$wiki-synthesize 주제탐색」으로 묶어 보세요._
 
 ## 논문 (0편)
 

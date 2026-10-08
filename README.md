@@ -24,8 +24,8 @@ macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstra
 ```
 llmwiki/                        ← ChatGPT 데스크톱 앱(Codex)에서 "이 폴더"를 엽니다
 ├── AGENTS.md                   ← 에이전트 규칙서 (반드시 맨 위에)
-├── .agents/skills/             ← 스킬 4개 (반드시 맨 위에) — 숨김 폴더
-│   ├── wiki-ingest/  wiki-query/  wiki-lint/  wiki-synthesize/
+├── .agents/skills/             ← 스킬 3개 (반드시 맨 위에) — 숨김 폴더
+│   ├── wiki-ingest/  wiki-query/  wiki-synthesize/
 ├── llmwiki   llmwiki.cmd       ← CLI 실행기 (macOS / Windows)
 ├── llmwiki.yaml                ← 설정 (Zotero 주소, 실습 컬렉션 이름)
 ├── wiki/                       ← 위키 (에이전트가 씀)
@@ -97,11 +97,10 @@ Windows에는 Git이 기본으로 없으므로 **Download ZIP**이 표준 수동
 이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘
 ```
 기대하는 답(예시):
-> 이 폴더의 AGENTS.md는 Zotero 논문으로 연구 위키를 관리하는 규칙서입니다(리뷰 형식은 이제현 박사님의 Paper Curation 기반). 사용할 수 있는 스킬은 4개입니다.
+> 이 폴더의 AGENTS.md는 Zotero 논문으로 연구 위키를 관리하는 규칙서입니다(리뷰 형식은 이제현 박사님의 Paper Curation 기반). 사용할 수 있는 스킬은 3개입니다.
 > - **wiki-ingest** — 논문 넣기(추출 → 한국어 7섹션 리뷰 → 관련 링크)
-> - **wiki-query** — 근거를 달아 답하기, 문구·그림 찾기, 아이디어, 이어쓰기
-> - **wiki-lint** — 위키 점검·연결
-> - **wiki-synthesize** — 서론 초안·주제 탐색·아이디어 결합·공통 한계·네트워크 질문
+> - **wiki-query** — 근거를 달아 채팅으로 답하기, 문구·그림 찾기, 아이디어(파일은 만들지 않음)
+> - **wiki-synthesize** — 서론 초안·주제 탐색·아이디어 결합·공통 한계·이어쓰기·네트워크 질문(문서 파일로 저장)
 
 스킬이 안 보이면: ① 연 폴더의 맨 위에 `AGENTS.md`와 `.agents/skills/`가 있는지(0절) ② 새 채팅을 열었는지 ③ 앱 재시작. 그래도 `$스킬`이 안 되면 "논문 넣어줘"처럼 말로 요청하세요 — AGENTS.md가 해당 SKILL.md를 직접 읽게 합니다.
 
@@ -123,7 +122,7 @@ Windows에는 Git이 기본으로 없으므로 **Download ZIP**이 표준 수동
 | 위키 화면 보기 | 「위키 화면 열어 줘」 · 「위키 화면 새로 만들어 줘」 · 「이 폴더에서 위키 화면 다시 켜 줘」 |
 | 샘플 논문 빼기 | 「샘플 논문 빼 줘」 (설치 때 자동으로 들어간 샘플 3편만 빠짐, 내 논문은 그대로) |
 | 문구·그림 찾기 | `"learning by teaching" 문구 어디 나와?` · `시스템 구조 그림 찾아줘` |
-| 점검 | `$wiki-lint` |
+| 점검 | 「점검해 줘」 (`llmwiki lint` 실행 후 결과 설명) |
 | 서론 초안 | `$wiki-synthesize 서론 LLM 튜터링의 학습 효과` |
 | 주제 탐색 | `$wiki-synthesize 주제탐색 AI 교육` |
 | 아이디어 결합 | `$wiki-synthesize 결합 <논문1 slug> + <논문2 slug>` |

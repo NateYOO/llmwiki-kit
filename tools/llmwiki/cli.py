@@ -322,7 +322,7 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
         try:
             from . import lint as _lint
             sm = _lint.summarize(_lint.run(ws))
-            print(f"위키 점검(lint): ERROR {sm['errors']} · WARN {sm['warnings']}" + (" ✅" if not sm["errors"] else " → Codex에게 「$wiki-lint」라고 말해 고치세요"))
+            print(f"위키 점검(lint): ERROR {sm['errors']} · WARN {sm['warnings']}" + (" ✅" if not sm["errors"] else " → Codex에게 「점검해 줘」라고 말해 고치세요"))
         except Exception as e:  # noqa: BLE001
             print(f"위키 점검(lint)을 못 돌렸어요: {e}")
         if msg:

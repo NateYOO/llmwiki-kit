@@ -53,7 +53,7 @@ macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstra
 ```
 이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘
 ```
-기대: AGENTS.md 설명 + 스킬 4개(wiki-ingest, wiki-query, wiki-lint, wiki-synthesize).
+기대: AGENTS.md 설명 + 스킬 3개(wiki-ingest, wiki-query, wiki-synthesize).
 
 ## 2. CLI 명령
 | 명령 | 하는 일 | 자주 쓰는 옵션 |
@@ -94,9 +94,9 @@ macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstra
 | 깊게 조사 (관점 3–6개로 나눠 위키 안에서 조사) | `$wiki-query 깊게 조사: LLM 기반 튜터링의 효과와 한계` |
 | 문구 찾기 | `"learning by teaching" 문구 어디 나와?` |
 | 그림 찾기 | `시스템 구조 그림 찾아줘` |
-| 이어쓰기 | `drafts/문헌고찰.md 이어서 써줘` |
+| 이어쓰기 | `$wiki-synthesize 이어쓰기 drafts/문헌고찰.md` (파일 끝에 덧붙이기만) |
 | 주제 폴더에 저장 | 「… 결과는 projects/<주제이름>/ 에 저장해 주세요」 |
-| 점검 | `$wiki-lint` |
+| 점검 | 「점검해 줘」 (`llmwiki lint` 실행 후 결과 설명) |
 | 서론 초안 | `$wiki-synthesize 서론 LLM 튜터링의 학습 효과` → `drafts/intro-…-YYYYMMDD.md` |
 | 주제 탐색 | `$wiki-synthesize 주제탐색 AI 교육` → `wiki/topics/…` + `drafts/topic-map-…` |
 | 아이디어 결합 | `$wiki-synthesize 결합 <slug1> + <slug2>` → `drafts/merge-…` |
@@ -108,7 +108,7 @@ macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstra
 | 허브 논문 | `$wiki-synthesize 허브` → `drafts/net-hubs-…` |
 `$`가 안 되면 같은 내용을 말로 요청해도 됩니다(AGENTS.md가 SKILL.md를 읽게 함).
 
-`$wiki-query`는 **내 위키 안 자료만** 씁니다(웹 검색 안 함). 위키에 없으면 「없음」이라고 말하고 Zotero에 넣을 논문 검색어만 알려 줍니다. 답 끝에는 항상 「참고한 곳」(리뷰 파일 `wiki/papers/<slug>/review.md#섹션` · 원문 p.N · 화면 `site/papers/<slug>/index.html`)이 붙습니다. 짧은 답은 query, `drafts/`에 남길 긴 문서는 `$wiki-synthesize`. 아이디어·비교·깊게 조사 답 끝에 「이 대화 내용을 문서 파일로 정리해 드릴까요?」가 붙고, 「응」이라고 하면 synthesize가 `drafts/`(또는 말한 주제 폴더)에 파일을 만듭니다.
+`$wiki-query`는 **내 위키 안 자료만** 씁니다(웹 검색 안 함). 위키에 없으면 「없음」이라고 말하고 Zotero에 넣을 논문 검색어만 알려 줍니다. 답 끝에는 항상 「참고한 곳」(리뷰 파일 `wiki/papers/<slug>/review.md#섹션` · 원문 p.N · 화면 `site/papers/<slug>/index.html`)이 붙습니다. query는 채팅으로만 답하고 파일은 만들지 않습니다. `drafts/`(또는 주제 폴더)에 남길 문서와 이어쓰기는 `$wiki-synthesize`. 아이디어·비교·깊게 조사 답 끝에 「이 대화 내용을 문서 파일로 정리해 드릴까요?」가 붙고, 「응」이라고 하면 synthesize가 `drafts/`(또는 말한 주제 폴더)에 파일을 만듭니다.
 
 ### 3-1. 연구자 질문 예시 (복사해서 채팅창에)
 ```text

@@ -1,6 +1,6 @@
 ---
 name: wiki-synthesize
-description: 위키 종합(synthesize). 여러 논문을 엮어 문서 파일(.md)을 drafts/ 또는 projects/<주제>/에 만들고, 위키 화면(초안·아이디어)에도 나타나요. 서론 초안·주제 탐색·아이디어 결합·공통 한계, 네트워크 질문(이웃·덩어리 서론·미해결 빈틈·군집 결합·허브).
+description: 위키 종합(synthesize). 여러 논문을 엮어 문서 파일(.md)을 drafts/ 또는 projects/<주제>/에 만들고, 위키 화면(초안·아이디어)에도 나타나요. 서론 초안·주제 탐색·아이디어 결합·공통 한계·이어쓰기(기존 .md에 덧붙이기), 네트워크 질문(이웃·덩어리 서론·미해결 빈틈·군집 결합·허브).
 ---
 
 # wiki-synthesize — 여러 논문을 엮어 내 연구로
@@ -13,6 +13,7 @@ description: 위키 종합(synthesize). 여러 논문을 엮어 문서 파일(.m
 만들 파일: merge-<짧은이름>-YYYYMMDD.md · 저장 위치: drafts/ (주제 폴더를 말했으면 projects/<주제이름>/)
 모드: 3 결합
 쓸 논문: <slug1>, <slug2>
+덧붙일 파일: (이어쓰기일 때만) drafts/<기존 파일>.md — 끝에 덧붙이기만, 기존 문장은 그대로
 목차:
 1. …  (3–6줄)
 이대로 만들게요. 바꾸려면 지금 말해 주세요.
@@ -22,7 +23,7 @@ description: 위키 종합(synthesize). 여러 논문을 엮어 문서 파일(.m
 
 공통 규칙:
 - **모든 문장**에 근거 꼬리표 `[근거: <slug> · <섹션 또는 p.N>]`. 여러 논문이면 `[근거: a · Gap; b · p.3]`. 근거 없는 문장은 `(가설)`로 시작한다.
-- 결과는 **`drafts/`에 새 파일로 저장**한다(파일 이름은 아래 표). 사용자가 주제 폴더(`projects/<주제이름>/`)를 말하면 **그 폴더에** 같은 파일 이름으로 저장한다(그림 링크는 `../../wiki/papers/…`). 같은 이름이 있으면 덮어쓰지 말고 `-2`를 붙인다. 사용자 글은 고치지 않는다.
+- 결과는 **`drafts/`에 새 파일로 저장**한다(파일 이름은 아래 표). 사용자가 주제 폴더(`projects/<주제이름>/`)를 말하면 **그 폴더에** 같은 파일 이름으로 저장한다(그림 링크는 `../../wiki/papers/…`). 같은 이름이 있으면 덮어쓰지 말고 `-2`를 붙인다. 사용자 글은 고치지 않는다. **예외는 하나, 5 이어쓰기**: 사용자가 그 파일을 이어 써 달라고 했을 때만 기존 `.md` 끝에 덧붙인다(기존 문장은 지우거나 고치지 않음).
 - 저장 후 `llmwiki index` → `llmwiki log synthesize "<모드>: <주제>" --note "<저장한 경로>"`(예: drafts/… 또는 projects/<주제이름>/…). (위키 화면 `site/`가 있으면 log가 자동 갱신 → 학생에게 "브라우저 새로고침(F5, 맥 Cmd+R)" 안내)
 - **synthesize = `drafts/`에 남기는 문서.** 채팅으로 짧게 답하거나 비교·아이디어 몇 줄만 원하면 `$wiki-query`(사실 확인·비교·아이디어·연구 확장·반론·깊게 조사)로 안내한다. 웹 검색 금지, 위키 안 자료만.
 - `$wiki-query` 대화에서 넘어온 경우(「응」「만들어 줘」): 그 대화의 아이디어를 재료로 쓴다. 근거 꼬리표는 그대로 `wiki/`만 가리킨다. 대화에서 나온 아이디어는 `(가설)` 또는 「대화에서 나온 아이디어」로 표시하고 꼬리표를 붙이지 않는다.
@@ -34,6 +35,7 @@ description: 위키 종합(synthesize). 여러 논문을 엮어 문서 파일(.m
 | 2 주제탐색 | `$wiki-synthesize 주제탐색 AI 교육` | `wiki/topics/<주제>.md` (+ `drafts/topic-map-<분야>-YYYYMMDD.md`) |
 | 3 결합 | `$wiki-synthesize 결합 2024-schmucker-… + 2024-wang-…` | `drafts/merge-<짧은이름>-YYYYMMDD.md` |
 | 4 공통한계 | `$wiki-synthesize 공통한계` | `drafts/gaps-YYYYMMDD.md` (+ 원자료 `drafts/_sections-limitation-gap-YYYYMMDD.md`) |
+| 5 이어쓰기 | `$wiki-synthesize 이어쓰기 drafts/문헌고찰.md` | 그 파일 끝에 덧붙임 (새 파일 없음) |
 | N1 이웃 | `$wiki-synthesize 이웃 <새 논문 slug>` | `drafts/net-neighbors-<slug>-YYYYMMDD.md` |
 | N2 덩어리서론 | `$wiki-synthesize 덩어리서론` | `drafts/net-intro-flow-YYYYMMDD.md` |
 | N3 미해결빈틈 | `$wiki-synthesize 미해결빈틈` | `drafts/net-open-gaps-YYYYMMDD.md` |
@@ -57,7 +59,7 @@ description: 위키 종합(synthesize). 여러 논문을 엮어 문서 파일(.m
 
 ## 2. 주제 탐색 (최소 3편 권장)
 1. `llmwiki clusters` (군집·대표 단어·군집 간 유사도) 와 `llmwiki related --json` 을 본다. 각 리뷰의 category·tags·Essence도 읽는다.
-2. 군집마다 이름을 짓고 `wiki/topics/<영문-소문자-하이픈>.md` 를 만들거나 갱신한다(형식은 wiki-lint 스킬 4절: 핵심 정리 / 논문 / 열린 질문). 새 파일을 만들기 전 목록을 보여 주고 확인.
+2. 군집마다 이름을 짓고 `wiki/topics/<영문-소문자-하이픈>.md` 를 만들거나 갱신한다(형식은 `../wiki-ingest/references/wiki-format.md` 6절: 핵심 정리 / 논문 / 열린 질문). 새 파일을 만들기 전 목록을 보여 주고 확인.
 3. `drafts/topic-map-<분야>-YYYYMMDD.md`:
    - 군집 표: 군집 이름 · 논문 · 대표 단어 · 공통 질문 (각 칸 근거)
    - 군집이 왜 이렇게 나뉘었는지 설명(자동 군집은 어휘 기반이라는 한계 명시)
@@ -90,6 +92,14 @@ description: 위키 종합(synthesize). 여러 논문을 엮어 문서 파일(.m
    ```
    표의 각 행은 최소 1개 꼬리표. 한 논문에만 나온 것은 "단발"로 표시.
 
+## 5. 이어쓰기 (기존 .md에 덧붙이기)
+사용자가 「drafts/… 이어서 써줘」처럼 **그 파일을 이어 써 달라고 했을 때만** 한다. `drafts/`·`projects/<주제이름>/`의 `.md`만(한글·엑셀 등은 안 함).
+1. 대상 파일을 끝까지 읽고 문체·구조·이미 인용한 논문을 파악한다. 파일이 없으면 새 파일로 만들지 물어본다.
+2. 0단계에서 「덧붙일 파일」을 보여 주고 이어서 진행한다. 쓸 내용은 위키에서 찾는다(`llmwiki search`, 필요하면 `--scope source`).
+3. **파일 끝에 덧붙이기만 한다.** 기존 문장은 지우거나 고치지 않는다(고칠 점은 채팅으로 제안만). 추가 부분 앞에 `<!-- llmwiki: AI 추가 YYYY-MM-DD -->`.
+4. 사실 문장마다 꼬리표 + 문단 끝에 리뷰 링크 `[제목](../wiki/papers/<slug>/review.md)`(projects/<주제이름>/ 안이면 `../../wiki/papers/…`).
+5. `llmwiki index` → `llmwiki log draft "<파일 이름> 이어쓰기" --note "<파일 경로>"`.
+
 ## N. 네트워크를 질문거리로 (시각화가 아니라 "무엇을 물을지"를 찾는 용도)
 링크 = review.md 사이의 상대 링크. 자동 링크(`## Related Papers` 블록)와 **근거 링크**(블록 밖 '에이전트 해석'에 근거와 함께 쓴 링크)를 구분한다.
 논문이 적으면 자동 링크가 거의 모두를 잇는다 → 판단은 **근거 링크 수**와 관계(🏛 기반/🔗 후속/🔄 다른 접근)를 우선한다.
@@ -121,7 +131,7 @@ description: 위키 종합(synthesize). 여러 논문을 엮어 문서 파일(.m
 3. "처음 읽을 3편" 추천 순서(허브 → 이웃)와 이유.
 
 ## 하지 말 것
-- 근거 없는 일반론으로 문단 채우기, 원문 문단 복사, 사용자 메모 수정, 유료 API.
+- 근거 없는 일반론으로 문단 채우기, 원문 문단 복사, 사용자 메모 수정(이어쓰기의 끝에 덧붙이기만 예외), 유료 API.
 
 ## 끝나면 알리기
 저장과 `llmwiki index`·log가 끝나면 채팅에 저장한 경로와 화면 위치를 알려 준다:

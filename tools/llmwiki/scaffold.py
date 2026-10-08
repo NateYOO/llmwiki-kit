@@ -16,7 +16,6 @@ KIT_ITEMS = [
     "llmwiki.cmd",
     ".agents/skills/wiki-ingest",
     ".agents/skills/wiki-query",
-    ".agents/skills/wiki-lint",
     ".agents/skills/wiki-synthesize",
     "tools",
     "setup",
@@ -41,7 +40,7 @@ AGENTS_POINTER = """
 <!-- llmwiki:agents-pointer -->
 ## 연구 위키(llmwiki) 규칙
 이 폴더의 논문 위키 작업(ingest/query/lint, 위키 읽기·쓰기)은 **`AGENTS.llmwiki.md`의 규칙을 반드시 먼저 읽고 따른다.**
-스킬: `.agents/skills/wiki-ingest`, `wiki-query`, `wiki-lint`, `wiki-synthesize`.
+스킬: `.agents/skills/wiki-ingest`, `wiki-query`, `wiki-synthesize`. 점검은 `llmwiki lint`.
 """
 
 
