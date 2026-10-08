@@ -107,6 +107,20 @@ def _year(date: str) -> str:
     return m.group(1) if m else ""
 
 
+def is_standalone_pdf(d: dict[str, Any]) -> bool:
+    """상위 항목 없는 PDF 첨부(Zotero에 PDF만 끌어다 넣고 메타데이터 검색이 실패한 경우) — QA H43."""
+    return (d.get("itemType") == "attachment" and d.get("contentType") == "application/pdf"
+            and not d.get("parentItem"))
+
+
+def ingest_seed(item: dict[str, Any]) -> dict[str, Any]:
+    """import에 넘길 Zotero 서지. 단독 PDF는 제목이 파일 이름일 때가 많아 키만 넘기고
+    제목·DOI·저자는 PDF(메타데이터·첫 페이지·DOI → Crossref/arXiv)에서 찾게 한다."""
+    if item.get("standalone_pdf"):
+        return {"key": item.get("key", ""), "zotero_note": "standalone PDF (상위 항목 없음)"}
+    return {k: v for k, v in item.items() if k not in ("pdf", "date_added", "standalone_pdf")}
+
+
 # =========================================================== 1) local API
 class LocalApiBackend:
     name = "local_api"
@@ -203,9 +217,19 @@ class LocalApiBackend:
             "pdf": "",
             "backend": self.name,
         }
+        if is_standalone_pdf(d):
+            item["standalone_pdf"] = True
+            item["item_type"] = "attachment (단독 PDF)"
         if with_pdf:
-            item["pdf"] = self.pdf_path(item["key"])
+            item["pdf"] = self._file_path(item["key"]) if item.get("standalone_pdf") else self.pdf_path(item["key"])
         return item
+
+    def _file_path(self, att_key: str) -> str:
+        try:
+            url = self._get(f"/items/{att_key}/file/view/url")
+        except ZoteroUnavailable:
+            return ""
+        return file_url_to_path(url.strip()) if isinstance(url, str) and url.startswith("file:") else ""
 
     def pdf_path(self, key: str) -> str:
         try:
@@ -215,12 +239,9 @@ class LocalApiBackend:
         for ch in children if isinstance(children, list) else []:
             d = ch.get("data", {})
             if d.get("contentType") == "application/pdf":
-                try:
-                    url = self._get(f"/items/{d.get('key')}/file/view/url")
-                except ZoteroUnavailable:
-                    continue
-                if isinstance(url, str) and url.startswith("file:"):
-                    return file_url_to_path(url.strip())
+                path = self._file_path(d.get("key", ""))
+                if path:
+                    return path
         return ""
 
     def collections(self) -> list[dict[str, Any]]:
@@ -229,14 +250,15 @@ class LocalApiBackend:
 
     def search(self, query: str = "", collection: str = "", tag: str = "", limit: int = 20, with_pdf: bool = True,
                everything: bool = False, sort: str = "") -> list[dict[str, Any]]:
-        # 서버의 itemType 부정 조합('-attachment || note')은 기대대로 걸러지지 않아(QA H06),
-        # '-attachment'만 서버에 맡기고 노트·주석은 여기서 거른 뒤, limit을 채울 때까지 start로 페이지를 넘긴다.
+        # 서버의 itemType 부정 조합('-attachment || note')은 기대대로 걸러지지 않아(QA H06) 서버 거르기는 쓰지 않는다.
+        # 최상위(top) 항목 중 노트·주석·PDF 아닌 첨부는 여기서 거르고, 상위 항목 없는 단독 PDF는 남긴다(QA H43).
+        # limit을 채울 때까지 start로 페이지를 넘긴다.
         ckey = self._collection_key(collection) if collection else ""
         out: list[dict[str, Any]] = []
         start, page = 0, max(25, min(100, limit * 2))
         for _ in range(20):  # 최대 2000건 훑기
             params = {"q": query, "qmode": "everything" if everything else "titleCreatorYear", "tag": tag,
-                      "limit": page, "start": start, "format": "json", "itemType": "-attachment"}
+                      "limit": page, "start": start, "format": "json"}
             if sort:  # 'dateAdded' → 최근 추가 순 (QA 23129에서 sort/direction 동작 확인)
                 params.update({"sort": sort, "direction": "desc"})
             if ckey:
@@ -245,7 +267,8 @@ class LocalApiBackend:
                 data = self._call("top", (), params, "/items/top")
             data = data if isinstance(data, list) else []
             for r in data:
-                if r.get("data", {}).get("itemType") in ("attachment", "note", "annotation"):
+                d = r.get("data", {})
+                if d.get("itemType") in ("note", "annotation") or (d.get("itemType") == "attachment" and not is_standalone_pdf(d)):
                     continue
                 out.append(r)
                 if len(out) >= limit:
@@ -385,10 +408,12 @@ class SqliteBackend:
             "WHERE ic.itemID=? ORDER BY ic.orderIndex", (item_id,)).fetchall()
         return [" ".join(x for x in [r["firstName"], r["lastName"]] if x).strip() for r in rows]
 
-    def _pdf(self, item_id: int) -> str:
+    def _pdf(self, item_id: int, standalone: bool = False) -> str:
+        """하위 PDF 첨부(standalone=False) 또는 그 항목 자신(단독 PDF)의 파일 경로."""
+        where = "a.itemID=?" if standalone else "a.parentItemID=?"
         rows = self.conn.execute(
             "SELECT i.key, a.path FROM itemAttachments a JOIN items i ON i.itemID=a.itemID "
-            "WHERE a.parentItemID=? AND a.contentType='application/pdf' "
+            f"WHERE {where} AND a.contentType='application/pdf' "
             "AND a.itemID NOT IN (SELECT itemID FROM deletedItems)", (item_id,)).fetchall()
         for r in rows:
             path = r["path"] or ""
@@ -410,21 +435,25 @@ class SqliteBackend:
             "SELECT c.collectionName FROM collectionItems ci JOIN collections c ON c.collectionID=ci.collectionID WHERE ci.itemID=?", (row["itemID"],))]
         tags = [r[0] for r in self.conn.execute(
             "SELECT t.name FROM itemTags it JOIN tags t ON t.tagID=it.tagID WHERE it.itemID=?", (row["itemID"],))]
-        return {
+        standalone = row["typeName"] == "attachment"  # _BASE가 첨부 중 단독 PDF만 남김
+        extra = {"standalone_pdf": True} if standalone else {}
+        return extra | {
             "key": row["key"], "title": f.get("title", ""), "authors": self._authors(row["itemID"]),
             "date": f.get("date", "")[:10], "year": _year(f.get("date", "")),
             "doi": f.get("DOI", "") or _doi_from_extra(f.get("extra", "")), "url": f.get("url", ""),
             "abstract": f.get("abstractNote", ""),
             "venue": f.get("publicationTitle") or f.get("proceedingsTitle") or f.get("conferenceName") or "",
-            "item_type": row["typeName"], "collections": cols, "tags": tags,
+            "item_type": "attachment (단독 PDF)" if standalone else row["typeName"], "collections": cols, "tags": tags,
             "citekey": f.get("citationKey", ""),
             "arxiv": _arxiv_from(" ".join([f.get("extra", ""), f.get("url", ""), f.get("DOI", "")])),
             "date_added": row["dateAdded"] if "dateAdded" in row.keys() else "",
-            "pdf": self._pdf(row["itemID"]) if with_pdf else "", "backend": self.name,
+            "pdf": self._pdf(row["itemID"], standalone) if with_pdf else "", "backend": self.name,
         }
 
     _BASE = ("SELECT i.itemID, i.key, i.dateAdded, t.typeName FROM items i JOIN itemTypes t ON t.itemTypeID=i.itemTypeID "
-             "WHERE t.typeName NOT IN ('attachment','note','annotation') AND i.itemID NOT IN (SELECT itemID FROM deletedItems)")
+             "WHERE (t.typeName NOT IN ('attachment','note','annotation') OR (t.typeName='attachment' AND i.itemID IN "
+             "(SELECT itemID FROM itemAttachments WHERE parentItemID IS NULL AND contentType='application/pdf'))) "
+             "AND i.itemID NOT IN (SELECT itemID FROM deletedItems)")  # 단독 PDF 포함(QA H43)
 
     def collections(self) -> list[dict[str, Any]]:
         rows = self.conn.execute("SELECT c.key, c.collectionName, p.key AS pkey FROM collections c LEFT JOIN collections p ON p.collectionID=c.parentCollectionID").fetchall()

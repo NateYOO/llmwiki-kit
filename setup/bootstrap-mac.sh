@@ -10,6 +10,7 @@
 #   0 폴더 점검  1 기본 도구(curl·unzip)  2 Git(선택: Xcode 명령어 도구)  3 uv + Python 3.12(관리자 권한 없음)
 #   4 키트 받기(git clone 또는 ZIP) + 병합  5 .venv + 패키지  6 UTF-8  7 git init  8 doctor + 한 줄 요약
 # 오류 코드: E00 폴더 / E01 인터넷 / E02 Git(치명 아님) / E03 uv / E04 Python / E05 키트 / E06 패키지 / E07 doctor
+# 종료 코드: E00~E06 = 10+번호, E07 = 27(17은 DOCTOR_FAIL 전용, QA H47), 성공 0
 set -u
 REPO_URL=""; BRANCH="main"; TARGET=""; KIT_SOURCE=""; CHECK_ONLY=0; SKIP_GIT=0; ALLOW_NONEMPTY=0
 while [ $# -gt 0 ]; do
@@ -34,6 +35,8 @@ die()  {
     E00|E05) say "AGENT: Read the line starting with '해결:' to the student word for word and STOP. Do not retry, do not try other commands." ;;
     *) say "AGENT: Retry the same command ONCE. If it fails again, say: '설치가 멈췄습니다. 오류 코드 $1 - 손을 들어 이 화면을 보여 주세요.' and paste the last 20 lines. Then STOP." ;;
   esac
+  [ -n "${TMPK:-}" ] && rm -rf "$TMPK"   # 키트 임시 폴더는 오류로 끝나도 지운다(QA H47)
+  [ "$1" = E07 ] && exit 27               # 17은 DOCTOR_FAIL 전용
   exit $((10 + 10#${1#E}))
 }
 run()  { "$@" 2>&1 | while IFS= read -r l; do say "    $l"; done; return "${PIPESTATUS[0]}"; }

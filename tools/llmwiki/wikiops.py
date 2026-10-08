@@ -257,7 +257,7 @@ def build_index_block(ws: Workspace) -> str:
         groups.setdefault(str(p.fm.get("category") or "미분류"), []).append(p)
     lines.append(f"## 논문 ({len(papers)}편)\n")
     if not papers:
-        lines.append("_아직 논문이 없습니다. `$wiki-ingest 논문제목` 으로 시작하세요._\n")
+        lines.append("_아직 논문이 없습니다. `$wiki-ingest 최근 1편` 으로 시작하세요(Zotero 실습 컬렉션에 PDF 1편)._\n")
     for cat in sorted(groups, key=lambda c: (c == "미분류", c)):
         lines.append(f"### {cat}\n")
         for p in sorted(groups[cat], key=lambda x: (str(x.fm.get("year") or ""), x.slug)):

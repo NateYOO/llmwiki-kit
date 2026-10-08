@@ -88,7 +88,7 @@ cat <<MSG
 
 설치 완료: $WORK
   다음 단계
-  1) ChatGPT 데스크톱 앱 → Codex → 프로젝트 → 폴더 추가 → 이 폴더를 Primary로
-  2) 채팅창에:  \$wiki-ingest 논문제목   (또는 "이 논문 위키에 넣어줘")
+  1) ChatGPT 데스크톱 앱 → Codex → 이 폴더 열기 → 새 채팅
+  2) Zotero의 실습 컬렉션에 논문 PDF 1편을 넣고, 채팅창에:  \$wiki-ingest 최근 1편
   터미널에서 직접:  ./llmwiki --help
 MSG

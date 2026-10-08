@@ -148,6 +148,6 @@ def extract_to_wiki(ws: Workspace, pdf: Path, *, seed: dict | None = None, slug:
         "next": [
             f"review.md 작성: {ws.rel(out / 'review.md')} (7섹션, 한국어, 근거 페이지 표기)",
             "그림 확인: figures/figures.md 에서 Essence/Achievement/How용 그림 고르기",
-            "llmwiki related --write → llmwiki index → llmwiki log ingest \"제목\" → llmwiki lint",
+            f"리뷰를 다 쓴 뒤: llmwiki finish {slug}  (related --write + index + log + lint)",
         ],
     }

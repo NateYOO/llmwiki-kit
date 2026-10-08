@@ -4,10 +4,10 @@
 > 원작: [이제현 박사님 · Paper Curation](https://github.com/jehyunlee/paper-curation) · 위키 구조: [Andrej Karpathy · LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
 > 이 키트는 두 아이디어(리뷰 형식, raw→wiki→schema 3층 구조)를 바탕으로 **새로 구현**했습니다. 원작의 코드는 한 줄도 복사하지 않았습니다(Paper Curation 저장소에는 라이선스가 없어 형식만 참고했습니다).
 
-0) 빈 폴더를 만들고 Codex 앱에서 [폴더 열기] (예: C:\llmwiki)
-1) 오른쪽 위 복사 버튼
-2) 새 채팅에 붙여넣기
-3) [승인]
+0\) 빈 폴더를 만들고 Codex 앱에서 [폴더 열기] (예: C:\llmwiki)\
+1\) 오른쪽 위 복사 버튼\
+2\) 새 채팅에 붙여넣기\
+3\) [승인]
 
 ```text
 LLM 위키 키트를 이 폴더에 설치해 주세요. 저장소: <REPO_URL>
@@ -54,13 +54,13 @@ llmwiki/                        ← ChatGPT 데스크톱 앱(Codex)에서 "이 �
 1. **빈 폴더 만들기** — Windows: `C:\llmwiki` · macOS: 홈 폴더의 `llmwiki` (OneDrive·iCloud·문서·바탕 화면 **안은 피하세요**: 동기화가 설치 파일 수천 개와 충돌합니다)
 2. ChatGPT 데스크톱 앱 → Codex → 그 폴더 열기 (모델 Luna, 추론 Medium)
 3. 채팅창에 **맨 위 복사 상자의 설치 문장**을 그대로 붙여 넣기 (상자 오른쪽 위 복사 버튼. 강사가 `<REPO_URL>`을 실제 주소로 바꿔 배포합니다)
-4. 에이전트가 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 하면 **[승인]** 을 누릅니다(보통 2번). Windows에서 화면이 어두워지며 "이 앱이 디바이스를 변경하도록 허용…" 창이 뜨면 **[예]** (Git 설치, 거절해도 설치는 계속됨). 창이 안 보이는데 오래 멈춰 있으면 **작업 표시줄에서 깜빡이는 방패 아이콘**을 누르세요.
+4. 에이전트가 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 하면 **[승인]** 을 누릅니다(보통 2번). Windows 확인 창(화면이 어두워지며 "이 앱이 디바이스를 변경하도록 허용…")은 보통 뜨지 않습니다(Git은 이미 있을 때만 씀). 혹시 뜨면 **[예]**, 창이 안 보이는데 오래 멈춰 있으면 **작업 표시줄에서 깜빡이는 방패 아이콘**을 누르세요.
 5. 5~10분 뒤 `설치 완료 ✅ / 남은 일: …` 이 나오면 끝. **새 채팅**을 열어 2절의 인식 확인을 해 보세요.
 
 - 설치 문장에 첫 명령(받기 + 폴더 점검)이 글자 그대로 들어 있어 에이전트가 따로 판단할 것이 없습니다. 다음 명령은 그 명령의 출력이 알려 줍니다(`AGENT_CMD:` 줄). 절차의 원본은 [INSTALL_FOR_AGENT.md](INSTALL_FOR_AGENT.md)입니다.
 
-에이전트가 하는 일(학생은 승인만): 받기 + 폴더 점검 → (Windows) winget 확인·Git 설치(선택) → **uv로 Python 3.12 설치(관리자 권한 없음, Microsoft Store python 별칭을 쓰지 않음)** → 키트 받기(Git이 없으면 ZIP) → `.venv`에 pymupdf·pyyaml·pyzotero 설치 → UTF-8 설정 → `llmwiki doctor`.
-다시 실행해도 안전합니다(이미 있는 파일은 덮어쓰지 않음). 내 컴퓨터에 남는 변경: 사용자 환경 변수 `PYTHONUTF8=1`(한글 출력용, Windows) 하나와 uv·Python(사용자 폴더). 오류 코드(E00~E07, 17)는 [INSTALL_FOR_AGENT.md](INSTALL_FOR_AGENT.md) 표를 보세요.
+에이전트가 하는 일(학생은 승인만): 받기 + 폴더 점검 → (Windows) winget 확인·Git 확인(이미 있으면 사용, 설치는 강사 옵션 `-WithGit`) → **uv로 Python 3.12 설치(관리자 권한 없음, Microsoft Store python 별칭을 쓰지 않음)** → 키트 받기(Git이 없으면 ZIP) → `.venv`에 pymupdf·pyyaml·pyzotero 설치 → UTF-8 설정 → `llmwiki doctor`.
+다시 실행해도 안전합니다(이미 있는 파일은 덮어쓰지 않음). 내 컴퓨터에 남는 변경: 사용자 환경 변수 `PYTHONUTF8=1`(한글 출력용, Windows) 하나와 uv·Python(사용자 폴더). 오류 코드(E00~E07, DOCTOR_FAIL 17)는 [INSTALL_FOR_AGENT.md](INSTALL_FOR_AGENT.md) 표를 보세요.
 
 ### 1-1. 다른 설치 방법
 | 방법 | 언제 | 하는 법 |

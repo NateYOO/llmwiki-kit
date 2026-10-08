@@ -1,5 +1,6 @@
-"""`llmwiki finish <slug>` — 넣기 뒤 처리 4단계(related --write → index → log → lint)를 한 번에 (QA H40).
-단계별 rc를 남기고, 마지막 줄은 표준 문구(ASCII 표지 RESULT: 포함)."""
+"""`llmwiki finish <slug>` — 넣기 뒤 처리(related --write → index → lint → 완료일 때만 log)를 한 번에 (QA H40).
+단계별 rc를 남기고, 마지막 줄은 표준 문구(ASCII 표지 RESULT: 포함).
+미완료(헤딩 빈칸·이 논문 ERROR·단계 실패)면 log에 쓰지 않는다 — 미완성 넣기가 완료처럼 기록되지 않게 (QA H46①)."""
 from __future__ import annotations
 
 import re
@@ -42,17 +43,6 @@ def run(ws: Workspace, slug: str, *, op: str = "ingest", note: str = "") -> dict
     paper = load_paper(ws, slug)
     title = paper.title or slug
 
-    def do_log():
-        clean = " ".join(title.split()).replace("|", "/")
-        from .util import today
-        head = f"## [{today()}] {op} | {clean}"
-        if ws.log.exists() and head in read_text(ws.log):
-            return "오늘 같은 기록이 이미 있어 건너뜀"
-        notes = [f"wiki/papers/{slug}/review.md"] + ([note] if note else [])
-        append_log(ws, op, title, notes)
-        return head
-    step("log", do_log)
-
     issues: list[Any] = []
 
     def do_lint():
@@ -68,6 +58,23 @@ def run(ws: Workspace, slug: str, *, op: str = "ingest", note: str = "") -> dict
     others_err = sum(1 for i in issues if i.level == "ERROR") - len(errs)
     failed = [s for s in steps if s["rc"] != 0]
     ok = not failed and not errs and not empty
+
+    def do_log():
+        clean = " ".join(title.split()).replace("|", "/")
+        from .util import today
+        head = f"## [{today()}] {op} | {clean}"
+        if ws.log.exists() and head in read_text(ws.log):
+            return "오늘 같은 기록이 이미 있어 건너뜀"
+        notes = [f"wiki/papers/{slug}/review.md"] + ([note] if note else [])
+        append_log(ws, op, title, notes)
+        return head
+
+    if ok:
+        step("log", do_log)
+        failed = [s for s in steps if s["rc"] != 0]
+        ok = not failed
+    else:
+        steps.append({"step": "log", "rc": 0, "skipped": True, "detail": "건너뜀 — 미완료라 기록하지 않음(완료 후 finish를 다시 부르면 기록)"})
     if ok:
         result, last = "RESULT: OK", f"넣기 완료 ✅ {title} · 헤딩 {filled}/{total} · lint ERROR 0 (이 논문 WARN {len(warns)})"
     else:

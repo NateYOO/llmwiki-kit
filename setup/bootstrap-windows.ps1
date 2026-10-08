@@ -6,10 +6,11 @@
   점검만:      ... -CheckOnly -RepoUrl <저장소 주소>   (학생 설치 문장의 첫 명령. 끝에 다음 명령을 AGENT_CMD: 줄로 알려 줌)
   에이전트 판정: 마지막 부분의 ASCII 줄 'RESULT: …'(CHECK_OK / OK / DOCTOR_FAIL / FAIL Exx)과 'AGENT: …'만 보면 된다(QA H34).
   하는 일 (8단계, 다시 실행해도 안전 / 기존 파일은 절대 덮어쓰지 않음):
-    0 폴더 점검(비어 있음 · OneDrive/문서/바탕화면 자체가 아님)  1 winget 확인  2 Git(선택, 사용자 범위)
+    0 폴더 점검(비어 있음 · OneDrive/문서/바탕화면 자체가 아님)  1 winget 확인  2 Git(이미 있으면 사용. 설치는 -WithGit일 때만 - UAC를 피하려고, QA H35)
     3 uv + Python 3.12 (관리자 권한 없음)  4 키트 받기(git clone 또는 ZIP) + 병합  5 .venv + 패키지
     6 UTF-8 설정  7 git init(Git이 있을 때)  8 doctor + 한 줄 요약
   오류 코드: E00 폴더 / E01 인터넷 / E02 Git(치명 아님) / E03 uv / E04 Python / E05 키트 받기·복사 / E06 패키지 / E07 doctor
+  종료 코드: E00~E06 = 10+번호, E07 = 27(17은 DOCTOR_FAIL 전용, QA H47), 성공 0
   PowerShell 5.1과 7 모두 지원. 시스템 설정(실행 정책 등)은 영구 변경하지 않는다.
 #>
 [CmdletBinding()]
@@ -20,6 +21,7 @@ param(
     [string]$KitSource = "",
     [switch]$CheckOnly,
     [switch]$SkipGit,
+    [switch]$WithGit,
     [switch]$NoUv,
     [switch]$AllowNonEmpty
 )
@@ -35,6 +37,7 @@ try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::S
 $OnWindows = ($env:OS -eq 'Windows_NT')
 $TotalSteps = 8
 $Script:LogFile = $null
+$tmpRoot = $null   # 키트 임시 폴더(받기 때 만듦). 오류로 끝나도 지운다(QA H47)
 
 function Write-Line([string]$Text) {
     Write-Host $Text
@@ -55,8 +58,10 @@ function Exit-WithError([string]$Code, [string]$Message, [string]$Hint) {
     } else {
         Write-Line "AGENT: Retry the same command ONCE. If it fails again, say: '설치가 멈췄습니다. 오류 코드 $Code - 손을 들어 이 화면을 보여 주세요.' and paste the last 20 lines. Then STOP."
     }
+    if ($Script:tmpRoot -and (Test-Path -LiteralPath $Script:tmpRoot)) { Remove-Item -LiteralPath $Script:tmpRoot -Recurse -Force -ErrorAction SilentlyContinue }
     $num = 0
     [void][int]::TryParse($Code.Substring(1), [ref]$num)
+    if ($Code -eq 'E07') { exit 27 }   # 17은 DOCTOR_FAIL 전용
     exit (10 + $num)
 }
 function Invoke-Native([string]$Exe, [string[]]$Arguments) {
@@ -172,6 +177,15 @@ Write-Line "  작업 폴더   : $Target"
 Write-Line "  실행 사용자 : $who"
 Write-Line ("  사용자 폴더 : {0}" -f $(if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME }))
 Write-Line ("  PowerShell  : {0}" -f $PSVersionTable.PSVersion)
+# 받기 실패 뒤 남은 옛 사본이 실행되는 것 막기(QA H47③): 설치 문장의 첫 명령은 'iwr … -OutFile 임시파일; powershell -File 임시파일 -CheckOnly'라
+# 받기가 실패해도 뒤 명령이 돈다. 방금 받은 파일이면 수정 시각이 지금이므로, 15분보다 오래된 임시 사본은 옛것으로 보고 지운 뒤 E01로 멈춘다.
+if ($CheckOnly -and $PSCommandPath -and ((Split-Path -Leaf $PSCommandPath) -eq 'llmwiki-bootstrap.ps1') -and ($PSCommandPath -like ([IO.Path]::GetTempPath() + '*'))) {
+    $age = (Get-Date) - (Get-Item -LiteralPath $PSCommandPath).LastWriteTime
+    if ($age.TotalMinutes -gt 15) {
+        Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue
+        Exit-WithError -Code 'E01' -Message ("설치 파일을 새로 받지 못했습니다(남아 있던 {0:N0}분 전 사본은 지웠습니다)." -f $age.TotalMinutes) -Hint "인터넷 연결과 저장소 주소를 확인한 뒤 같은 설치 문장을 다시 보내세요."
+    }
+}
 if (-not (Test-Path -LiteralPath $Target -PathType Container)) { Exit-WithError -Code 'E00' -Message "작업 폴더가 없습니다: $Target" -Hint "Codex 앱에서 빈 폴더(권장: C:\llmwiki)를 열고 다시 시작하세요." }
 $docs = [Environment]::GetFolderPath('MyDocuments'); $desk = [Environment]::GetFolderPath('Desktop')
 $homeDir = $(if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME })
@@ -220,8 +234,14 @@ $wingetCommon = @('--accept-source-agreements', '--accept-package-agreements', '
 # ------------------------------------------------------------------ 2. Git (선택)
 Write-Step 2 "Git (선택 - 없어도 설치는 계속됩니다)"
 $git = Find-Git
-if ($git) { Write-Line "  Git 있음: $git" }
-elseif ($SkipGit -or -not $OnWindows) { Write-Line "  Git 건너뜀" }
+if ($SkipGit) { $git = $null; Write-Line "  Git 건너뜀(-SkipGit)" }
+elseif ($git) { Write-Line "  Git 있음: $git" }
+elseif (-not $OnWindows) { Write-Line "  Git 건너뜀" }
+elseif (-not $WithGit) {
+    # 기본은 Git을 설치하지 않는다: winget Git은 사용자 범위에서도 Windows 확인 창(UAC)을 띄울 수 있고,
+    # 그 창이 작업 표시줄에 숨어 설치가 멈춘 것처럼 보인다(QA H35). 키트는 ZIP으로 받고 git init만 건너뛴다.
+    Write-Line "  Git 없음 → ZIP으로 받습니다(Git 설치는 기본 생략: Windows 확인 창 없이 끝내려고. 버전 관리가 필요하면 나중에 설치)."
+}
 elseif ($winget) {
     Write-Line "  winget으로 Git 설치(사용자 범위 시도, 1~3분)"
     $rc = Invoke-Native $winget.Source (@('install', '--id', 'Git.Git', '--scope', 'user') + $wingetCommon)

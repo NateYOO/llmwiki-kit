@@ -116,6 +116,6 @@ Remove-Item Env:PYTHONPATH; Remove-Item Env:LLMWIKI_ROOT
 
 Write-Host ""
 Write-Host "Done: $Work" -ForegroundColor Green
-Write-Host "  Next: ChatGPT desktop app -> Codex -> Project -> Add folder -> make this folder Primary"
-Write-Host "  In chat:      `$wiki-ingest <paper title>"
+Write-Host "  Next: ChatGPT desktop app -> Codex -> open this folder -> New chat"
+Write-Host "  In chat:      `$wiki-ingest   (no words = newest PDF in the Zotero practice collection)"
 Write-Host "  In terminal:  .\llmwiki.cmd --help"

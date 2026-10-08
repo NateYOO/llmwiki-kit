@@ -21,7 +21,7 @@ macOS: curl -fsSL <REPO_URL>/raw/main/setup/bootstrap-mac.sh -o /tmp/llmwiki-boo
 | 단계 | 명령 | 판정 |
 |---|---|---|
 | 1. 받기 + 폴더 점검 | 위 문장의 Windows/macOS 한 줄 (샌드박스 밖) | `RESULT: CHECK_OK` / `RESULT: FAIL E00` |
-| 2. 설치 | 1단계 출력의 `AGENT_CMD:` 줄 그대로 — Windows `… powershell -NoProfile -ExecutionPolicy Bypass -File "<TEMP>\llmwiki-bootstrap.ps1" -RepoUrl "<REPO_URL>"`, macOS `bash "/tmp/llmwiki-bootstrap.sh" --repo "<REPO_URL>"` | `RESULT: OK` (0) / `RESULT: DOCTOR_FAIL` (17, 다시 실행 안 함) / `RESULT: FAIL E0n` (10+n) |
+| 2. 설치 | 1단계 출력의 `AGENT_CMD:` 줄 그대로 — Windows `… powershell -NoProfile -ExecutionPolicy Bypass -File "<TEMP>\llmwiki-bootstrap.ps1" -RepoUrl "<REPO_URL>"`, macOS `bash "/tmp/llmwiki-bootstrap.sh" --repo "<REPO_URL>"` | `RESULT: OK` (0) / `RESULT: DOCTOR_FAIL` (17, 다시 실행 안 함) / `RESULT: FAIL E0n` (10+n, E07만 27) |
 
 ### 1-2. 대체 경로
 | 방법 | 명령 |
@@ -63,12 +63,12 @@ macOS: curl -fsSL <REPO_URL>/raw/main/setup/bootstrap-mac.sh -o /tmp/llmwiki-boo
 | `llmwiki sample` | 복구용 샘플 위키 3편을 `wiki/`에 복사(+관련 링크·목차 갱신) | `--overwrite` |
 | `llmwiki zotero status` | 어떤 백엔드(로컬 API·sqlite 사본·외부 CLI)로 연결되는지 | `--backend` |
 | `llmwiki zotero collections` | 컬렉션 목록 | |
-| `llmwiki zotero next` | 실습 컬렉션에서 **Zotero에 추가한 날짜**가 가장 최근이고 PDF가 있고 위키에 없는 논문 1편을 골라 바로 추출 + 다음 후보 2편 표시. 넣을 것이 없으면 종료 코드 3 | `--collection`, `--pick N`, `--dry-run`, `--offline`, `--backend sqlite`(Zotero 데이터 폴더 사본, 로컬 API 없이) |
+| `llmwiki zotero next` | 실습 컬렉션에서 **Zotero에 추가한 날짜**가 가장 최근이고 PDF가 있고 위키에 없는 논문 1편을 골라 바로 추출 + 다음 후보 2편 표시. 상위 항목 없는 **단독 PDF**도 후보(서지는 PDF에서 찾음). 넣을 것이 없으면 이유(빈 컬렉션·이미 있음·PDF 없음)와 함께 종료 코드 3 | `--collection`, `--pick N`, `--dry-run`, `--offline`, `--backend sqlite`(Zotero 데이터 폴더 사본, 로컬 API 없이) |
 | `llmwiki zotero search "tutoring"` | 항목 찾기(키워드는 **영어**). 기본은 실습 컬렉션(`llmwiki.yaml`의 `practice_collection`) 안 | `--collection`, `--all`(라이브러리 전체), `--tag`, `--limit N`, `--no-pdf`, `--everything`(초록까지) |
 | `llmwiki zotero get <KEY>` | 항목 하나의 서지·PDF 경로 | |
 | `llmwiki zotero import <KEY>` | Zotero 항목 PDF를 위키로 추출 | `--offline`, `--force`, `--slug` |
 | `llmwiki extract "<PDF>"` | PDF 직접 추출 → `wiki/papers/<slug>/` | `--offline`, `--force`, `--slug` |
-| `llmwiki finish <slug>` | 넣기 마무리 한 번에: related --write → index → log(같은 날 같은 제목은 한 번만) → lint. 단계별 rc, 이 논문 문제만 따로, 마지막 줄 `넣기 완료 ✅ …` / `넣기 미완료 ❌ / 고칠 것: …` (앞에 `RESULT: OK/FAIL`) | `--op`, `--note`, `--json` |
+| `llmwiki finish <slug>` | 넣기 마무리 한 번에: related --write → index → lint → log(**완료일 때만**, 같은 날 같은 제목은 한 번만). 단계별 rc, 이 논문 문제만 따로, 마지막 줄 `넣기 완료 ✅ …` / `넣기 미완료 ❌ / 고칠 것: …` (앞에 `RESULT: OK/FAIL`) | `--op`, `--note`, `--json` |
 | `llmwiki related --write` | 관련 논문 자동 블록 갱신(모든 리뷰) | `--top N`, `--slug` |
 | `llmwiki related <slug>` | 한 논문의 이웃: 관계·링크 방향·공유 주제·공저자 | `--json` |
 | `llmwiki hubs` | 링크가 많은 허브 논문 + 연결 덩어리 | `--top N`, `--json` |

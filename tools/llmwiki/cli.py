@@ -29,11 +29,72 @@ def _ws(args):
     return find_workspace(args.root)
 
 
+def _pos_int(v: str) -> int:
+    """1 이상 정수 (--top·--limit·--pick)."""
+    try:
+        n = int(v)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"'{v}'는 정수가 아닙니다(예: 5)") from None
+    if n < 1:
+        raise argparse.ArgumentTypeError(f"{n}: 1 이상이어야 합니다")
+    return n
+
+
+def _unit_float(v: str) -> float:
+    """0과 1 사이 실수 (--threshold). 빼면 기본값(자동)."""
+    try:
+        x = float(v)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"'{v}'는 숫자가 아닙니다(예: 0.3)") from None
+    if not 0 < x < 1:
+        raise argparse.ArgumentTypeError(f"{v}: 0과 1 사이 값이어야 합니다(기본값을 쓰려면 옵션을 빼세요)")
+    return x
+
+
+_ARGPARSE_KO = [  # (영어 정규식, 한국어) — argparse 기본 오류 문장을 학생용으로 (QA H46②)
+    (r"unrecognized arguments: (.*)", r"모르는 옵션이나 값: \1"),
+    (r"the following arguments are required: (.*)", r"꼭 필요한 값이 빠졌습니다: \1"),
+    (r"argument (\S+): invalid choice: '?([^']*)'? \(choose from (.*)\)", r"\1 에는 '\2'를 쓸 수 없습니다. 가능한 값: \3"),
+    (r"argument (\S+): invalid (int|float) value: '([^']*)'", r"\1 값 '\3'는 숫자가 아닙니다"),
+    (r"argument (\S+): expected one argument", r"\1 뒤에 값이 하나 있어야 합니다"),
+    (r"argument (\S+): (.*)", r"\1: \2"),
+]
+
+
+class KoParser(argparse.ArgumentParser):
+    """도움말 제목·오류를 한국어로. 오류는 '[오류] … / 해결: …' 형식, rc 2."""
+
+    def __init__(self, *a, **kw):
+        kw.setdefault("formatter_class", argparse.RawDescriptionHelpFormatter)
+        super().__init__(*a, **kw)
+        self._positionals.title = "위치 인수"
+        self._optionals.title = "옵션"
+        for act in self._actions:
+            if isinstance(act, argparse._HelpAction):
+                act.help = "이 도움말을 보고 끝내기"
+
+    def format_usage(self):
+        return super().format_usage().replace("usage:", "사용법:", 1)
+
+    def format_help(self):
+        return super().format_help().replace("usage:", "사용법:", 1)
+
+    def error(self, message):
+        import re
+        msg = message
+        for pat, ko in _ARGPARSE_KO:
+            if re.fullmatch(pat, message, flags=re.S):
+                msg = re.sub(pat, ko, message, flags=re.S)
+                break
+        self.print_usage(sys.stderr)
+        self.exit(2, f"[오류] 명령 형식이 맞지 않습니다: {msg}\n  해결: `{self.prog} --help` 로 쓸 수 있는 옵션을 확인하세요.\n")
+
+
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="llmwiki", description="LLM 위키 하네스 CLI (Zotero → 마크다운 논문 위키)",
-                                epilog=HELP_EPILOG, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p = KoParser(prog="llmwiki", description="LLM 위키 하네스 CLI (Zotero → 마크다운 논문 위키)",
+                                epilog=HELP_EPILOG)
     p.add_argument("--root", help="작업 폴더 경로(기본: 현재 폴더에서 위로 AGENTS.md+wiki/ 탐색)")
-    p.add_argument("--version", action="version", version=f"llmwiki {__version__}")
+    p.add_argument("--version", action="version", version=f"llmwiki {__version__}", help="버전 보기")
     sub = p.add_subparsers(dest="cmd", metavar="<명령>")
 
     s = sub.add_parser("doctor", help="환경 점검 (Python·패키지·폴더·Zotero·네트워크)")
@@ -58,13 +119,13 @@ def build_parser() -> argparse.ArgumentParser:
     x.add_argument("--collection", default="", help="컬렉션 이름 또는 키 (생략: llmwiki.yaml의 practice_collection)")
     x.add_argument("--all", action="store_true", help="컬렉션 상관없이 라이브러리 전체에서 찾기")
     x.add_argument("--tag", default="")
-    x.add_argument("--limit", type=int, default=20)
+    x.add_argument("--limit", type=_pos_int, default=20)
     x.add_argument("--no-pdf", action="store_true", help="PDF 경로 조회 생략(빠름)")
     x.add_argument("--everything", action="store_true", help="제목·저자·연도뿐 아니라 초록·메모·전문 색인까지 검색 (qmode=everything)")
     x.add_argument("--backend", default="auto", choices=["auto", "local_api", "sqlite", "external"])
     x = zs.add_parser("next", help="실습 컬렉션에서 최근 추가한 논문(PDF 있고 위키에 없는 것) 1편을 골라 바로 import")
     x.add_argument("--collection", default="", help="컬렉션 이름 또는 키 (생략: llmwiki.yaml의 practice_collection)")
-    x.add_argument("--pick", type=int, default=1, help="N번째 후보를 넣기 (기본 1 = 가장 최근)")
+    x.add_argument("--pick", type=_pos_int, default=1, help="N번째 후보를 넣기 (기본 1 = 가장 최근)")
     x.add_argument("--dry-run", action="store_true", help="넣지 않고 무엇을 고를지만 보기")
     x.add_argument("--offline", action="store_true", help="Crossref/arXiv/OpenAlex 보강 생략 (Zotero 서지만 사용)")
     x.add_argument("--backend", default="auto", choices=["auto", "local_api", "sqlite", "external"],
@@ -87,7 +148,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("related", help="관련 논문 계산 (TF-IDF + BM25 → RRF, 저자·연도 규칙)")
     s.add_argument("--write", action="store_true", help="각 review.md의 '## Related Papers' 자동 블록 갱신")
-    s.add_argument("--top", type=int, help="논문당 후보 수 (기본 5)")
+    s.add_argument("--top", type=_pos_int, help="논문당 후보 수 (기본 5)")
     s.add_argument("--slug", help="이 논문 결과만 출력/갱신")
     s.add_argument("target", nargs="?", help="slug를 주면 그 논문의 이웃(관계·링크·주제·공저자)을 보여 줌: llmwiki related <slug>")
     s.add_argument("--json", action="store_true")
@@ -96,7 +157,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("query")
     s.add_argument("--scope", default="wiki", choices=["wiki", "source", "figures", "drafts", "all"],
                    help="wiki=리뷰·주제, source=추출 원문(페이지), figures=그림·표 캡션, drafts=초안")
-    s.add_argument("--top", type=int, default=8)
+    s.add_argument("--top", type=_pos_int, default=8)
     s.add_argument("--json", action="store_true")
 
     s = sub.add_parser("find", help="정확한 문구 찾기 (대소문자·줄바꿈 무시, 페이지 표시)")
@@ -106,7 +167,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("figures", help="그림·표 찾기 (= search --scope figures)")
     s.add_argument("query")
-    s.add_argument("--top", type=int, default=8)
+    s.add_argument("--top", type=_pos_int, default=8)
     s.add_argument("--json", action="store_true")
 
     s = sub.add_parser("lint", help="기계 검사: 스키마·헤딩·깨진 링크·고아·중복 DOI·관련 링크 대칭·그림")
@@ -114,11 +175,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--fix", action="store_true", help="안전한 자동 수정: related --write + index 재생성 후 다시 검사")
 
     s = sub.add_parser("hubs", help="링크가 가장 많은 허브 논문 + 연결 덩어리(네트워크를 질문거리로)")
-    s.add_argument("--top", type=int, default=10)
+    s.add_argument("--top", type=_pos_int, default=10)
     s.add_argument("--json", action="store_true")
 
     s = sub.add_parser("clusters", help="주제 탐색용 군집(TF-IDF 평균연결) + 대표 단어 + 군집 간 유사도·링크 수")
-    s.add_argument("--threshold", type=float, help="병합 기준 코사인(기본: 자동)")
+    s.add_argument("--threshold", type=_unit_float, help="병합 기준 코사인, 0과 1 사이(기본: 자동)")
     s.add_argument("--json", action="store_true")
 
     s = sub.add_parser("sections", help="여러 리뷰에서 같은 섹션만 모으기 (예: --name limitation,gap)")
@@ -244,7 +305,7 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
         try:
             backend, tried = open_backend(ws.config, args.backend)
         except ZoteroUnavailable as e:
-            print(str(e), file=sys.stderr)
+            print(f"[오류] {e}", file=sys.stderr)
             return 2
         if args.zcmd == "status":
             _print({"backend": backend.name, "status": backend.status(), "fallback_log": tried})
@@ -282,8 +343,11 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
                 print(res["message"])
                 return 3
             if res["status"] in ("ok", "duplicate"):
-                p = res["picked"]
-                print(f"고른 논문: {p['title']} ({p['year']}, {p['first_author'] or '저자 미상'}) → wiki/papers/{res.get('slug', '')}/")
+                p, ir = res["picked"], res.get("import_result") or {}
+                title, year = ir.get("title") or p["title"], ir.get("year") or p["year"]
+                author = (ir.get("authors") or [p["first_author"]])[0] or "저자 미상"
+                tag = " [Zotero 단독 PDF → 서지는 PDF에서 찾음, 제목 확인 필요]" if p.get("standalone_pdf") else ""
+                print(f"고른 논문: {title} ({year}, {author}) → wiki/papers/{res.get('slug', '')}/{tag}")
                 if res["other_candidates"]:
                     print("다른 후보: " + " · ".join(f"[{c['pick']}] {c['title'][:50]}" for c in res["other_candidates"]))
             return 0 if res["status"] in ("ok", "duplicate", "dry-run") else 1
@@ -292,12 +356,12 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
             _print(normalize_item(backend.get(args.key)))
         elif args.zcmd == "import":
             from .ingest import extract_to_wiki
-            from .zotero import normalize_item
+            from .zotero import ingest_seed, normalize_item
             item = normalize_item(backend.get(args.key))
             if not item.get("pdf"):
                 print(f"이 항목에 로컬 PDF가 없습니다(키 {args.key}). Zotero에서 PDF를 첨부하거나 `llmwiki extract <PDF>`를 쓰세요.", file=sys.stderr)
                 return 2
-            res = extract_to_wiki(ws, Path(item["pdf"]), seed=item, slug=args.slug, force=args.force,
+            res = extract_to_wiki(ws, Path(item["pdf"]), seed=ingest_seed(item), slug=args.slug, force=args.force,
                                   network=False if args.offline else None)
             res["zotero_backend"] = backend.name
             _print(res)
@@ -381,7 +445,7 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
     if args.cmd == "clusters":
         from . import related
         from .network import links_between
-        if not 0 < args.threshold < 1:
+        if args.threshold is not None and not 0 < args.threshold < 1:  # None = 자동 (QA H44: 회귀 수정)
             raise SystemExit("--threshold 는 0과 1 사이 값입니다(기본값을 쓰려면 빼세요).")
         res = related.clusters(ws, args.threshold)
         lb = links_between(ws, [[p["slug"] for p in c["papers"]] for c in res["clusters"]])
@@ -425,7 +489,7 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
             _print(res)
         else:
             for st in res["steps"]:
-                print(f"[{'OK' if st['rc'] == 0 else 'FAIL'}] {st['step']:<16} rc={st['rc']}  {st['detail']}")
+                print(f"[{'SKIP' if st.get('skipped') else 'OK' if st['rc'] == 0 else 'FAIL'}] {st['step']:<16} rc={st['rc']}  {st['detail']}")
             for i in res["paper_issues"]:
                 print(f"  [{i['level']}] {i['code']:<14} {i['path']}  {i['msg']}")
             if res["other_papers_errors"]:

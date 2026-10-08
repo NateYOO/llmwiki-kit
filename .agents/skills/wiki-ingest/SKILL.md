@@ -20,7 +20,7 @@ macOS/Linux `./llmwiki`, Windows `.\llmwiki.cmd` 로 바꿔 실행한다.
 
 ## 절차
 1. **고르기**
-   - `zotero next`: Zotero에 **추가한 날짜**가 가장 최근이고, 로컬 PDF가 있고, 위키에 아직 없는 논문을 골라 **바로 추출까지** 한다 → 2단계는 건너뛴다. 결과의 `picked`(고른 논문)·`other_candidates`(다음 후보 2편)를 기억한다. `status: none`(종료 코드 3)이면 `message`를 그대로 전하고 멈춘다.
+   - `zotero next`: Zotero에 **추가한 날짜**가 가장 최근이고, 로컬 PDF가 있고, 위키에 아직 없는 논문을 골라 **바로 추출까지** 한다 → 2단계는 건너뛴다. 결과의 `picked`(고른 논문)·`other_candidates`(다음 후보 2편)를 기억한다. `status: none`(종료 코드 3)이면 `message`를 그대로 전하고 멈춘다. `picked.standalone_pdf`(Zotero에 상위 항목 없이 PDF만 있음)면 서지를 PDF에서 찾았으므로 meta.json의 제목·저자·연도를 첫 페이지와 대조해 리뷰에 바르게 쓴다.
    - `zotero search`: **키워드는 영어로 바꿔서**(예: "튜터링" → `tutoring`). 기본은 실습 컬렉션 안, 전체 라이브러리는 `--all`. 0건이면 영어 동의어로 한두 번 더, 초록까지는 `--everything`.
      후보 표(번호 · 제목 · 연도 · 제1저자 · PDF 유무). 하나면 바로 진행, 여럿이고 불분명하면 **번호로 고르게 한다**(유일한 질문 지점).
    - `[오류]`에 컬렉션 번호 목록이 나오면 그 목록을 보여 주고 번호를 고르게 한 뒤 `--collection "<이름>"`으로 다시 한다.
@@ -41,10 +41,10 @@ macOS/Linux `./llmwiki`, Windows `.\llmwiki.cmd` 로 바꿔 실행한다.
    - 사실 문장마다 `[근거: <slug> · p.N]` 또는 `[근거: <slug> · Table N]`.
    - 그림 블록은 dual-coding 3줄 + "원문 PDF 캡처 · 로컬 연구용". ⚠️(신뢰도 낮음) 그림은 눈으로 확인 후에만.
    - 원문 문단을 옮기지 않는다. 한국어 서술, 용어는 원어.
-6. **마무리** — `llmwiki finish <slug>` (related --write → index → log → lint를 한 번에, 단계별 rc 포함)
+6. **마무리** — `llmwiki finish <slug>` (related --write → index → lint, 완료일 때만 log. 단계별 rc 포함)
    - 이 논문의 `## Related Papers` 자동 블록을 읽고, 실제 관계가 보이면 블록 **밖**에 `### 에이전트 해석` 1–3줄(근거 포함). 근거 없으면 쓰지 않는다.
    - 같은 주제의 논문이 2편 이상이면 `wiki/topics/<주제>.md`를 만들거나 덧붙여 두 리뷰를 링크한다.
-   - `paper_issues`의 ERROR를 고치고 `llmwiki finish <slug>`를 다시 부른다(같은 날 log는 한 번만 남음). 마지막 줄이 `넣기 완료 ✅ …`이면 끝.
+   - `paper_issues`의 ERROR를 고치고 `llmwiki finish <slug>`를 다시 부른다(log는 완료됐을 때 한 번만 남음). 마지막 줄이 `넣기 완료 ✅ …`이면 끝.
 7. **보고** — `finish`의 마지막 줄, 만든/바꾼 파일, 사용한 그림. `zotero next`였으면 끝에 한 줄: 「다른 논문을 원하면: `$wiki-ingest <제목 일부>` (다음 후보: …)」 — 묻지 않는다.
 
 ## 하지 말 것
