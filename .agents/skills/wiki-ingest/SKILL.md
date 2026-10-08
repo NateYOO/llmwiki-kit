@@ -24,7 +24,7 @@ macOS/Linux `./llmwiki`, Windows `.\llmwiki.cmd` 로 바꿔 실행한다.
    - `zotero search`: **키워드는 영어로 바꿔서**(예: "튜터링" → `tutoring`). 기본은 실습 컬렉션 안, 전체 라이브러리는 `--all`. 0건이면 영어 동의어로 한두 번 더, 초록까지는 `--everything`.
      후보 표(번호 · 제목 · 연도 · 제1저자 · PDF 유무). 하나면 바로 진행, 여럿이고 불분명하면 **번호로 고르게 한다**(유일한 질문 지점).
    - `[오류]`에 컬렉션 번호 목록이 나오면 그 목록을 보여 주고 번호를 고르게 한 뒤 `--collection "<이름>"`으로 다시 한다.
-   - Zotero 연결 실패: 오류를 그대로 보여 준다(보통 "Zotero 실행 + 설정→고급→다른 응용 프로그램과 통신 허용"). 샌드박스에서 127.0.0.1이 막힌 것 같으면 `--backend sqlite --offline`(Zotero 데이터 폴더 사본, 인터넷 없음)으로 한 번 시도, 안 되면 PDF 경로를 달라고 한다.
+   - Zotero 연결 실패: 오류를 그대로 보여 준다(보통 "Zotero 실행 + Zotero 설정(윈도우: 편집 → 설정, 맥: Zotero → 설정) → 고급 → 기타 → 'Allow other applications on this computer to communicate with Zotero' 체크"). 샌드박스에서 127.0.0.1이 막힌 것 같으면 `--backend sqlite --offline`(Zotero 데이터 폴더 사본, 인터넷 없음)으로 한 번 시도, 안 되면 PDF 경로를 달라고 한다.
 2. **추출** (`zotero next`를 썼으면 이미 끝남)
    - A. Zotero: `llmwiki zotero import <KEY>` · B. PDF: `llmwiki extract "<PDF 경로>"` (공백·한글 경로는 따옴표)
    - 네트워크가 막혔다는 오류/지연이 있으면 `--offline`을 붙여 다시.
