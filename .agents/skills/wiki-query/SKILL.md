@@ -8,7 +8,7 @@ description: 위키에 묻기(query). 내 위키 안 자료만으로 근거 답�
 먼저 `wiki/index.md`를 읽어 어떤 논문·주제가 있는지 파악한다. `llmwiki`는 macOS/Linux `./llmwiki`, Windows `.\llmwiki.cmd`.
 
 ## 0. 원칙 (모든 모드에 적용)
-1. **내 위키 안 자료만** 조합한다: `wiki/`(리뷰·주제·`source.md` 원문)와 `drafts/`.
+1. **내 위키 안 자료만** 조합한다: `wiki/`(리뷰·주제·`source.md` 원문)와 `drafts/`, 사용자가 말한 `projects/<주제이름>/`의 `.md`(근거 꼬리표는 `wiki/`만).
 2. **웹 검색 금지.** 웹 검색 도구(web search)·인터넷 열람을 쓰지 않는다. Codex 채팅에 웹 검색이 켜져 있어도 쓰지 않는다(비용·자원 절약, 근거를 내 위키에서 추적하기 위해). 기억 속 일반 지식을 쓸 때는 "위키 밖 일반 지식"이라고 밝히고 사실 근거로 쓰지 않는다.
 3. 사실 문장마다 근거 꼬리표: `[근거: <slug> · p.N]`, `[근거: <slug> · Table N]`, `[근거: <slug> · Achievement]`. 검색 결과의 `cite` 값을 그대로 쓴다. 근거 없는 추론·제안은 `(가설)`.
 4. 위키에 없으면 **「없음」이라고 분명히** 말한다. 논문 제목을 지어내거나 기억으로 채우지 않는다. 형식:
@@ -56,7 +56,7 @@ description: 위키에 묻기(query). 내 위키 안 자료만으로 근거 답�
 ## A. 근거 답변
 1. `llmwiki search "<핵심어 2–5개>"` (리뷰·주제). 한국어/영어 원어 둘 다 시도. 부족하면 `--scope source`로 원문 페이지.
 2. 답 형식: 결론 1–2문장 → 근거 bullet(각각 꼬리표) → 한계/불확실성. 논문끼리 다르면 차이를 명시.
-3. 좋은 답은 "drafts/에 저장할까요?" → 저장하면 `llmwiki index` + `llmwiki log query "<질문>"`.
+3. 좋은 답은 "drafts/에 저장할까요?"(사용자가 주제 폴더를 말했으면 "projects/<주제이름>/에 저장할까요?") → 저장하면 `llmwiki index` + `llmwiki log query "<질문>"`.
 
 ## F. 사실 확인 ("정말 있나?")
 1. `llmwiki search`(wiki·source 둘 다)와 `llmwiki find "<핵심 문구>"`로 찾는다.
@@ -71,7 +71,7 @@ description: 위키에 묻기(query). 내 위키 안 자료만으로 근거 답�
 ## D. 아이디어 발견
 1. 관련 리뷰들의 `Limitation & Further Study`, `Originality`, `Related Papers`를 읽는다 (`llmwiki sections --name limitation,originality,related`).
 2. 아이디어 3–5개, 각각: ① 어떤 빈틈에서 나왔나(2편 이상 꼬리표) ② 연구 질문 ③ 가능한 방법·데이터 ④ 위험. 근거 없는 부분은 `(가설)`.
-3. 문서로 남기려면 `$wiki-synthesize 결합 …` 또는 `drafts/ideas-YYYY-MM-DD-<주제>.md`(새 파일 전 확인) + `llmwiki log draft "<제목>"`.
+3. 문서로 남기려면 `$wiki-synthesize 결합 …` 또는 `drafts/ideas-YYYY-MM-DD-<주제>.md`(주제 폴더를 말했으면 `projects/<주제이름>/ideas-…md`, 새 파일 전 확인) + `llmwiki log draft "<제목>"`.
 
 ## H. 연구 확장
 기준 논문의 Essence·How·Limitation을 읽고, 위키의 다른 논문을 재료로 네 방향을 각각 1–2개씩: **대상**(다른 학습자·연령·국가) · **맥락**(과목·현장·modality) · **방법**(설계·측정·분석) · **변수**(조절·매개·결과 변수). 각 제안에 "어느 논문의 무엇을 빌려 오나"(꼬리표)와 `(가설)`.
@@ -93,7 +93,7 @@ description: 위키에 묻기(query). 내 위키 안 자료만으로 근거 답�
 3. **연결 따라 넓히기**: 찾은 핵심 논문마다 `llmwiki related <slug>`(또는 review.md의 `## Related Papers`)로 아직 안 본 이웃 1–2편을 더 읽는다. 위키 밖으로는 나가지 않는다.
 4. **관점별 문단**: 관점마다 한 문단(3–6문장, 문장마다 꼬리표). 근거가 1편뿐이면 "(근거 1편)", 없으면 "위키에 근거 없음" 또는 `(가설)`.
 5. **종합**: 관점들을 엮은 결론 한 문단 + 서로 어긋나는 결과 + 남은 빈틈(「없음」 형식의 검색어 제안).
-6. **「참고한 곳」**. 원하면 `drafts/deep-<주제-영문>-YYYYMMDD.md`로 저장(새 파일 전 확인) → `llmwiki index` → `llmwiki log query "깊게 조사: <주제>"`.
+6. **「참고한 곳」**. 원하면 `drafts/deep-<주제-영문>-YYYYMMDD.md`(주제 폴더를 말했으면 `projects/<주제이름>/deep-…md`)로 저장(새 파일 전 확인) → `llmwiki index` → `llmwiki log query "깊게 조사: <주제>"`.
 
 ## B. 문구 찾기
 1. `llmwiki find "<문구>"` — 대소문자·줄바꿈·하이픈 차이를 무시한 정확 일치, 결과에 페이지(p.N).
@@ -105,6 +105,7 @@ description: 위키에 묻기(query). 내 위키 안 자료만으로 근거 답�
 2. 상위 PNG를 **직접 열어** 요청과 맞는지 확인한다.
 3. 답: 그림 번호·페이지·캡션 요약·경로, 붙여 쓸 마크다운
    - drafts/에서: `![Figure 2](../wiki/papers/<slug>/figures/fig2.png)` / 주제 페이지에서: `![…](../papers/<slug>/figures/fig2.png)`
+   - projects/<주제이름>/에서: `![Figure 2](../../wiki/papers/<slug>/figures/fig2.png)` (한 단계 더 위로)
    - "원문 PDF 캡처 · 로컬 연구용"이라 공개 배포 시 저작권(라이선스)을 확인하라고 덧붙인다.
 
 ## E. 이어쓰기 (drafts/)

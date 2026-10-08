@@ -2,7 +2,7 @@
 """`llmwiki site` — wiki/·drafts/를 브라우저로 보는 정적 HTML(site/)로 만든다 (표준 라이브러리 + 기존 의존성만).
 - 상대 링크만 쓴다 → site/index.html을 file://로 열어도 JS 없이 링크로 다닐 수 있다.
 - 검색·필터·「Codex에게 물어보기」 복사 버튼은 JS(외부 라이브러리 없음). 검색 색인은 search-index.json + search-index.js.
-- 디자인·코드는 새로 작성(Paper Curation 코드·CSS 복사 없음). 하단에 아이디어 출처 표기."""
+- 목록·리뷰·네트워크 화면: Based on Paper Curation by 이제현 (https://github.com/jehyunlee/paper-curation) (THIRD_PARTY_NOTICES.md). 하단에 같은 출처 표기."""
 from __future__ import annotations
 
 import html
@@ -15,7 +15,13 @@ from pathlib import Path
 from typing import Any
 
 from .mdhtml import convert, slug_id
-from .util import RELATED_END, RELATED_START, Workspace, read_text, split_frontmatter, today
+from .util import RELATED_END, RELATED_START, Workspace, project_mds, read_text, split_frontmatter, today
+from urllib.parse import quote as _quote, unquote as _unquote
+
+
+def _href(path: str) -> str:
+    """한글 폴더·파일 이름: NFC로 맞추고 URL 인코딩(맥 NFD 대비)."""
+    return _quote(unicodedata.normalize("NFC", path), safe="/#._-~")
 
 CREDIT = ('Based on Paper Curation by 이제현 '
           '(<a href="https://github.com/jehyunlee/paper-curation" target="_blank" rel="noopener">https://github.com/jehyunlee/paper-curation</a>)')
@@ -51,8 +57,9 @@ class Builder:
             return f"papers/{m.group(1)}/index.html"
         if rel.startswith("wiki/"):
             rel = rel[5:]
-        elif not rel.startswith("drafts/"):
+        elif not rel.startswith(("drafts/", "projects/")):
             return None
+        rel = unicodedata.normalize("NFC", rel)
         if rel.endswith(".md"):
             return rel[:-3] + ".html"
         if Path(rel).suffix.lower() in IMG_EXT:
@@ -64,13 +71,16 @@ class Builder:
             if re.match(r"^[a-z][a-z0-9+.-]*:", url, re.I) or url.startswith("#"):
                 return url
             path, _, frag = url.partition("#")
-            target = (src.parent / path)
+            target = (src.parent / _unquote(path))
             sr = self.ws_to_site(target)
             if sr is None:
                 return url
             if frag and sr.endswith(".html"):
                 frag = slug_id(frag) if not re.fullmatch(r"p-?\d+", frag) else frag
-            return self.rel(out_rel, sr) + (f"#{frag}" if frag else "")
+            r = self.rel(out_rel, sr)
+            if not r.isascii():
+                r = _href(r)
+            return r + (f"#{frag}" if frag else "")
         return fn
 
     @staticmethod
@@ -208,6 +218,7 @@ class Builder:
         self.drafts = []
         if self.ws.drafts.exists():
             self.drafts = sorted((f for f in self.ws.drafts.glob("*.md")), key=lambda f: (f.name.lower() == "readme.md", -f.stat().st_mtime))
+        self.projects = project_mds(self.ws)
 
     # ------------------------------------------------------------ 페이지들
     def groups_of(self, p) -> list[tuple[str, str]]:
@@ -496,9 +507,29 @@ class Builder:
             rows.append(f'<li><a href="{E(f.stem)}.html"><b>{E(str(title))}</b></a> <span class="muted small">drafts/{E(f.name)} · {when}</span></li>')
             self.index.append({"k": "초안", "t": str(title), "u": rel, "x": _plain(body)[:4000]})
             self.draft_titles[f.stem] = str(title)
+        # projects/<주제>/**/*.md — 주제별 묶음 (README·hwp·xlsx 등 md가 아닌 파일은 제외)
+        groups: dict[str, list[str]] = {}
+        for f in self.projects:
+            relp = unicodedata.normalize("NFC", f.relative_to(self.ws.projects).as_posix())
+            topic = relp.split("/", 1)[0]
+            rel = "projects/" + relp[:-3] + ".html"
+            fm, body, _ = split_frontmatter(read_text(f))
+            content = self.cite_links(convert(body, self.linker(f, rel)), rel)
+            h1 = re.search(r"^#\s+(.+)$", body, re.M)
+            title = str((fm or {}).get("title") or (h1.group(1) if h1 else f.stem))
+            back = _href(self.rel(rel, "drafts/index.html"))
+            self.page(rel, title, f'<p class="crumb"><a href="{back}">← 초안·아이디어</a> · <code>projects/{E(relp)}</code></p><article class="md">{content}</article>',
+                      ask=f"$wiki-query <질문을 여기에> (참고: projects/{relp})", nav="drafts")
+            import datetime as _dt
+            when = _dt.datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+            groups.setdefault(topic, []).append(f'<li><a href="{E(_href(self.rel("drafts/index.html", rel)))}"><b>{E(title)}</b></a> <span class="muted small">projects/{E(relp)} · {when}</span></li>')
+            self.index.append({"k": "주제 폴더", "t": title, "u": _href(rel), "x": _plain(body)[:4000]})
+        proj_html = "".join(f'<h3>📁 {E(t)}</h3><ul class="plain drafts">{"".join(v)}</ul>' for t, v in groups.items())
         body = ('<h1>초안·아이디어 <span class="muted small">(drafts/ 폴더)</span></h1>'
                 '<p>Codex가 <code>$wiki-synthesize</code>로 만든 서론·아이디어 결합·공통 한계 문서와 내가 쓴 글이 여기 모여요.</p>'
-                f'<ul class="plain drafts">{"".join(rows) or "<li class=muted>아직 초안이 없어요.</li>"}</ul>')
+                f'<ul class="plain drafts">{"".join(rows) or "<li class=muted>아직 초안이 없어요.</li>"}</ul>'
+                '<h2>주제 폴더 <span class="muted small">(projects/ 폴더의 .md)</span></h2>'
+                + (proj_html or '<p class="muted">아직 주제 폴더 글이 없어요. 요청 끝에 「결과는 projects/&lt;주제이름&gt;/ 에 저장해 주세요」라고 하면 여기에 모여요.</p>'))
         self.page("drafts/index.html", "초안·아이디어", body, ask="$wiki-synthesize <서론|결합|공통한계> <주제를 여기에>", nav="drafts")
 
     def build_log(self) -> None:
@@ -539,7 +570,7 @@ class Builder:
         self.assets()
         removed = self.prune()
         return {"site": self.ws.rel(self.out / "index.html"), "papers": len(self.papers), "topics": len(self.topics),
-                "drafts": len(self.drafts), "clusters": len(self.clusters), "search_items": len(self.index),
+                "drafts": len(self.drafts), "projects": len(self.projects), "clusters": len(self.clusters), "search_items": len(self.index),
                 "removed_old_files": removed, "file_url": (self.out / "index.html").resolve().as_uri(), "index_path": str((self.out / "index.html").resolve())}
 
 

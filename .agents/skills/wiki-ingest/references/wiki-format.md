@@ -23,7 +23,7 @@
 - 점수는 1–5 정수. 본문 점수와 frontmatter 점수를 같게 쓴다.
 - 자동 related 블록 안은 손으로 고치지 않는다(`llmwiki related --write`가 덮어씀). 해석은 블록 밖 `### 에이전트 해석`에 쓴다.
 
-## 2. frontmatter 스키마 (평평한 키만 — Obsidian Properties 호환)
+## 2. frontmatter 스키마 (평평한 키만 — 위키 화면·검색·다른 마크다운 도구 호환)
 ```yaml
 title: "원제목"               # 필수
 authors: ["First Last", …]    # 필수, 목록

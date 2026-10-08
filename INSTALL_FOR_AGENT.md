@@ -1,6 +1,6 @@
 # INSTALL_FOR_AGENT.md — 에이전트용 설치 절차 (고정)
 
-> 이제현 박사님의 Paper Curation(https://github.com/jehyunlee/paper-curation) 아이디어를 바탕으로 만든 키트입니다. 감사드립니다. (코드 복사 없음)
+> 이제현 박사님의 Paper Curation(https://github.com/jehyunlee/paper-curation) 아이디어를 바탕으로 만든 키트입니다. 감사드립니다. Based on Paper Curation by 이제현 (https://github.com/jehyunlee/paper-curation)
 
 > 이 문서는 **AI 에이전트(Codex)** 가 따르는 설치 절차의 원본입니다. 사람은 승인 창에서 [승인]만 누르면 됩니다.
 > **에이전트는 이 문서를 따로 받지 않아도 됩니다.** 학생 설치 문장에 첫 명령이 글자 그대로 들어 있고, 그다음 명령은 그 명령의 출력(`AGENT_CMD:` 줄)이 알려 줍니다.
@@ -52,7 +52,7 @@ macOS: **"설치를 시작합니다(5~10분, 창을 닫지 마세요). 곧 승�
 1. 출력의 `설치 완료 ✅ / 남은 일: …` 줄 그대로.
 2. 출력의 `위키 화면: file:///…/site/index.html` 줄 그대로(브라우저로 열었다고 나오면 "브라우저에 샘플 논문 3편이 보이면 성공이에요."를 덧붙인다).
 3. "**새 채팅**을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요."
-4. "Zotero를 켜고 설정 → 고급에서 다른 응용 프로그램과 통신 허용을 켠 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요."
+4. "Zotero를 켜고 Zotero 설정(윈도우: 편집 → 설정, 맥: Zotero → 설정) → 고급 → 기타 → 'Allow other applications on this computer to communicate with Zotero' 체크한 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요."
    (새 채팅의 doctor는 샌드박스 안이면 인터넷·127.0.0.1 접속이 막혀 거짓 WARN이 날 수 있다. `--offline`은 arXiv·Crossref 점검을 빼고, 승인 요청(샌드박스 밖)은 Zotero 로컬 API 접속을 보장한다 — QA H36.)
 
 ## 오류 코드 (bootstrap 출력의 `[E..]`, 종료 코드 = 10 + 번호, E07만 27 — 17은 DOCTOR_FAIL 전용)

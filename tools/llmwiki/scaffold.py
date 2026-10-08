@@ -25,6 +25,7 @@ KIT_ITEMS = [
     "wiki/papers/.gitkeep",
     "wiki/topics/.gitkeep",
     "drafts/README.md",
+    "projects/README.md",
     "raw/README.md",
     "examples/sample-wiki",
     ".gitignore",
@@ -103,7 +104,7 @@ def init(target: Path, *, append_agents: bool = False, with_sample: bool = True)
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(f, dst)
             created.append(rel.as_posix())
-    for d in ("wiki/papers", "wiki/topics", "drafts", "raw"):
+    for d in ("wiki/papers", "wiki/topics", "drafts", "projects", "raw"):
         (target / d).mkdir(parents=True, exist_ok=True)
     try:
         os.chmod(target / "llmwiki", 0o755)

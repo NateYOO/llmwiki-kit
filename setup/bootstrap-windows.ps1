@@ -414,6 +414,7 @@ try { $wel = $wjson | ConvertFrom-Json } catch { $wel = $null }
 if ($wel -and -not $wel.error -and $wel.file_url) {
     if ($wel.sample -eq 'added') { Write-Line "  샘플 논문 3편을 넣었어요(나중에 「샘플 논문 빼 줘」로 뺄 수 있어요)." }
     Write-Line ("위키 화면: {0}" -f $wel.file_url)
+    if ($wel.index_path) { Write-Line ("  (폴더 경로: {0})" -f $wel.index_path) }
     if ($wel.opened) { Write-Line "  브라우저로 열었어요. 안 보이면 위 주소를 브라우저 주소창에 붙여넣으세요." } else { Write-Line "  위 주소를 브라우저 주소창에 붙여넣어 여세요." }
 } else {
     $why = if ($wel) { $wel.error } else { $wjson }
@@ -423,7 +424,7 @@ Write-Line ""
 Write-Line "다음: Codex 앱에서 이 폴더로 '새 채팅'을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요."
 Write-Line $doc.summary
 Write-Line "RESULT: OK"
-Write-Line "AGENT: Say to the student, in this order: (1) the line starting with '설치 완료' above; (2) the line starting with '위키 화면:' above word for word (it has the file:// address of the wiki screen; if it says it opened the browser, add '브라우저에 샘플 논문 3편이 보이면 성공이에요.'); (3) '새 채팅을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요.'; (4) 'Zotero를 켜고 설정 → 고급에서 다른 응용 프로그램과 통신 허용을 켠 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요.' Then STOP."
+Write-Line "AGENT: Say to the student, in this order: (1) the line starting with '설치 완료' above; (2) the line starting with '위키 화면:' above word for word (it has the file:// address of the wiki screen; if it says it opened the browser, add '브라우저에 샘플 논문 3편이 보이면 성공이에요.'); (3) '새 채팅을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요.'; (4) 'Zotero를 켜고 Zotero 설정(윈도우: 편집 → 설정, 맥: Zotero → 설정) → 고급 → 기타 → 'Allow other applications on this computer to communicate with Zotero' 체크한 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요.' Then STOP."
 # 받은 bootstrap 사본(임시 폴더)은 성공했을 때만 지운다 - 실패 때는 같은 명령으로 다시 실행할 수 있게(QA H37)
 if ($PSCommandPath -and ((Split-Path -Leaf $PSCommandPath) -eq 'llmwiki-bootstrap.ps1') -and ($PSCommandPath -like ([IO.Path]::GetTempPath() + '*'))) {
     Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue

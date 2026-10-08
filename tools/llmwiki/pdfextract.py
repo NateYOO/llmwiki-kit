@@ -1,7 +1,7 @@
 """PDF 추출: 본문 텍스트(페이지 표시), 그림·그래프(캡션 포함 영역 PNG), 표(PNG + markdown).
 
 방식은 sources.md §1.5·§4.3에 기록된 아이디어(캡션 정규식 → 그래픽 영역 합치기 → 영역 렌더)를
-참고해 이 저장소에서 새로 작성했다. Paper Curation 코드를 복사하지 않았다.
+참고해 이 저장소에서 구현했다. Based on Paper Curation by 이제현 (https://github.com/jehyunlee/paper-curation)
 의존성: PyMuPDF(pymupdf)만 사용.
 """
 from __future__ import annotations

@@ -53,6 +53,7 @@ class Workspace:
         self.papers = self.wiki / "papers"
         self.topics = self.wiki / "topics"
         self.drafts = self.root / "drafts"
+        self.projects = self.root / "projects"
         self.index = self.wiki / "index.md"
         self.log = self.wiki / "log.md"
         self.config = load_config(self.root)
@@ -231,3 +232,18 @@ def title_similarity(a: str, b: str) -> float:
 
 def dump_json(obj: Any) -> str:
     return json.dumps(obj, ensure_ascii=False, indent=2)
+
+
+def project_mds(ws: "Workspace") -> list[Path]:
+    """projects/<주제>/**/*.md (README·숨김 제외). .md가 아닌 파일(hwp·xlsx 등)은 보지 않는다."""
+    root = ws.root / "projects"
+    if not root.exists():
+        return []
+    out = []
+    for f in root.rglob("*.md"):
+        parts = f.relative_to(root).parts
+        if len(parts) < 2 or any(x.startswith(".") for x in parts) or f.name.lower() == "readme.md":
+            continue
+        out.append(f)
+    import unicodedata as _ud
+    return sorted(out, key=lambda f: _ud.normalize("NFC", f.relative_to(root).as_posix()).lower())

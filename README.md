@@ -3,7 +3,7 @@
 > **이제현 박사님의 Paper Curation 아이디어를 바탕으로 만들었습니다. 감사드립니다.**
 > 원작: [이제현 박사님 · Paper Curation](https://github.com/jehyunlee/paper-curation) · 위키 구조: [Andrej Karpathy · LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
 > Based on Paper Curation by 이제현 (https://github.com/jehyunlee/paper-curation)
-> 위키 화면(논문 목록·리뷰 화면·지식 네트워크)은 Paper Curation의 화면 코드를 이 키트에 맞게 고쳐 쓴 것이고, 나머지(리뷰 형식, raw→wiki→schema 3층 구조)는 두 아이디어를 바탕으로 새로 구현했습니다. 가져온 부분은 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 있습니다.
+> 위키 화면(논문 목록·리뷰 화면·지식 네트워크)은 Paper Curation의 화면 코드를 이 키트에 맞게 고쳐 쓴 것이고, 나머지(리뷰 형식, raw→wiki→schema 3층 구조)도 두 작업을 바탕으로 했습니다. 가져온 부분은 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 있습니다.
 
 0\) 빈 폴더를 만들고 Codex 앱에서 [폴더 열기] (예: C:\llmwiki)\
 1\) 오른쪽 위 복사 버튼\
@@ -33,6 +33,7 @@ llmwiki/                        ← ChatGPT 데스크톱 앱(Codex)에서 "이 �
 │   ├── papers/<논문>/review.md · source.md · figures/ · tables/
 │   └── topics/
 ├── drafts/                     ← 내 글·초안 (서론, 아이디어 메모)
+├── projects/<주제이름>/          ← 내 연구 주제 폴더 (초안·한글·엑셀)
 ├── raw/                        ← Zotero 밖 PDF (선택)
 ├── examples/sample-wiki/       ← 복구용 샘플 위키 3편 (CC BY 4.0)
 ├── tools/  setup/  .venv/      ← 프로그램 (건드리지 않음)
@@ -85,7 +86,7 @@ Windows에는 Git이 기본으로 없으므로 **Download ZIP**이 표준 수동
 ```
 다음 경로의 LLM 위키 스타터 키트를 지금 열린 이 폴더의 맨 위에 설치해 줘.
 키트 경로: <키트 폴더 경로>
-1) 복사: AGENTS.md, .agents/ (폴더째), tools/, setup/, llmwiki, llmwiki.cmd, llmwiki.yaml, wiki/(index.md·log.md·papers/·topics/), drafts/README.md, raw/README.md, examples/, .gitattributes
+1) 복사: AGENTS.md, .agents/ (폴더째), tools/, setup/, llmwiki, llmwiki.cmd, llmwiki.yaml, wiki/(index.md·log.md·papers/·topics/), drafts/README.md, projects/README.md, raw/README.md, examples/, .gitattributes
 2) 같은 이름의 파일이 이미 있으면 절대 덮어쓰지 말고 건너뛴 뒤 목록으로 알려 줘.
 3) 이 폴더에 AGENTS.md가 이미 있으면 덮어쓰지 말고 키트 것을 AGENTS.llmwiki.md로 복사한 다음, 두 파일을 어떻게 합칠지 제안만 해 줘(내가 승인하기 전엔 기존 AGENTS.md를 고치지 마).
 4) 끝나면 복사/건너뜀/합치기 제안을 표로 보여 주고, Windows면 powershell -NoProfile -ExecutionPolicy Bypass -File setup\bootstrap-windows.ps1 -AllowNonEmpty, macOS면 bash setup/bootstrap-mac.sh --allow-nonempty 를 실행해 줘. 실행 전에 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 말해 줘.
@@ -105,7 +106,7 @@ Windows에는 Git이 기본으로 없으므로 **Download ZIP**이 표준 수동
 스킬이 안 보이면: ① 연 폴더의 맨 위에 `AGENTS.md`와 `.agents/skills/`가 있는지(0절) ② 새 채팅을 열었는지 ③ 앱 재시작. 그래도 `$스킬`이 안 되면 "논문 넣어줘"처럼 말로 요청하세요 — AGENTS.md가 해당 SKILL.md를 직접 읽게 합니다.
 
 ## 3. Zotero 준비 (무료 계정, PDF는 내 컴퓨터에 저장)
-1. Zotero 7 이상 설치·실행 → **설정 → 고급 → "이 컴퓨터의 다른 응용 프로그램이 Zotero와 통신하도록 허용"** 켜기 (macOS: Zotero → 설정, Windows: 편집 → 설정)
+1. Zotero 7 이상 설치·실행 → **Zotero 설정(윈도우: 편집 → 설정, 맥: Zotero → 설정) → 고급 → 기타 → 'Allow other applications on this computer to communicate with Zotero' 체크** (한국어 화면에서도 이 체크 항목 이름은 영어로 나와요)
 2. 새 컬렉션 **`llmwiki-practice`** 를 만들고 넣을 논문 PDF **1편**을 끌어다 넣기(2편째는 선택). PDF가 Zotero에 첨부된 로컬 파일이어야 하고, 하위 컬렉션은 만들지 마세요. 이름을 다르게 만들었으면 `llmwiki.yaml`의 `practice_collection`을 그 이름으로 바꾸세요(컬렉션이 하나뿐이면 자동으로 그것을 씁니다).
 3. 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」 → `Zotero 로컬 API`와 `실습 컬렉션`이 PASS인지 확인 (샌드박스 안에서 돌리면 Zotero 접속이 막혀 거짓 WARN이 날 수 있어 승인 요청으로 실행합니다)
 - `$wiki-ingest 최근 1편`은 이 컬렉션에서 **Zotero에 추가한 날짜**가 가장 최근이고, PDF가 있고, 위키에 아직 없는 논문을 골라 넣습니다(`llmwiki zotero next`). 그래서 컬렉션에는 실습할 논문만 넣으세요.

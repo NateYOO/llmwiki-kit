@@ -63,11 +63,11 @@ def _page_chunks(ws: Workspace) -> list[Chunk]:
     return out
 
 
-def _md_chunks(folder: Path, kind: str) -> list[Chunk]:
+def _md_chunks(folder: Path, kind: str, files: list[Path] | None = None) -> list[Chunk]:
     out = []
     if not folder.exists():
         return out
-    for f in sorted(folder.glob("*.md")):
+    for f in (files if files is not None else sorted(folder.glob("*.md"))):
         fm, body, _ = split_frontmatter(read_text(f))
         parts = re.split(r"^(#{1,3} .+)$", strip_comments(body), flags=re.M)
         out.append(Chunk(f, f.stem, "본문", str((fm or {}).get("title", f.stem)) + "\n" + parts[0], kind, {}))
@@ -112,6 +112,8 @@ def search(ws: Workspace, query: str, scope: str = "wiki", top: int = 8) -> list
         chunks += _review_chunks(ws) + _md_chunks(ws.topics, "topic")
     if scope in ("drafts", "all"):
         chunks += _md_chunks(ws.drafts, "draft")
+        from .util import project_mds
+        chunks += _md_chunks(ws.projects, "draft", files=project_mds(ws))
     if scope in ("source", "all"):
         chunks += _page_chunks(ws)
     if scope in ("figures", "all"):
@@ -159,6 +161,8 @@ def find_phrase(ws: Workspace, phrase: str, scope: str = "all", context: int = 1
         files += [(f.stem, f) for f in sorted(ws.topics.glob("*.md"))] if ws.topics.exists() else []
     if scope in ("all", "drafts"):
         files += [(f.stem, f) for f in sorted(ws.drafts.glob("*.md"))] if ws.drafts.exists() else []
+        from .util import project_mds
+        files += [(f.stem, f) for f in project_mds(ws)]
     hits = []
     for slug, f in files:
         raw = read_text(f)

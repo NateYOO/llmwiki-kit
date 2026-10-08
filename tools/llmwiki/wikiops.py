@@ -84,6 +84,24 @@ def iter_links(text: str) -> list[tuple[bool, str, str]]:
     return out
 
 
+def _match_nfc(p: Path) -> Path | None:
+    """경로를 한 칸씩 따라가며 NFC가 같은 실제 이름을 찾는다(없으면 None)."""
+    import unicodedata
+    cur = Path(p.anchor)
+    for part in p.parts[1:]:
+        nxt = cur / part
+        if not nxt.exists():
+            want = unicodedata.normalize("NFC", part)
+            try:
+                nxt = next((c for c in cur.iterdir() if unicodedata.normalize("NFC", c.name) == want), None)
+            except OSError:
+                return None
+            if nxt is None:
+                return None
+        cur = nxt
+    return cur.resolve()
+
+
 def resolve_link(ws: Workspace, src: Path, target: str, kind: str) -> Path | None:
     """외부 URL·앵커는 None. 상대 경로는 파일 기준, 위키링크는 작업 폴더/위키 기준으로 해석."""
     if re.match(r"^[a-z][a-z0-9+.-]*:", target, re.I) or target.startswith("#"):
@@ -93,7 +111,12 @@ def resolve_link(ws: Workspace, src: Path, target: str, kind: str) -> Path | Non
     if not t:
         return None
     if kind == "md":
-        return (src.parent / t).resolve()
+        r = (src.parent / t).resolve()
+        if not r.exists() and not t.isascii():
+            alt = _match_nfc(r)  # 맥 NFD 폴더·파일 이름 ↔ NFC 링크
+            if alt is not None:
+                return alt
+        return r
     cands = [ws.wiki / t, ws.root / t]
     for c in cands:
         for cc in (c, c.with_name(c.name + ".md")):
@@ -276,6 +299,16 @@ def build_index_block(ws: Workspace) -> str:
     drafts = sorted(ws.drafts.glob("*.md")) if ws.drafts.exists() else []
     lines.append("## 초안 (drafts)\n")
     lines += [f"- [{d.stem}](../drafts/{d.name})" for d in drafts] or ["_없음_"]
+    from .util import project_mds
+    import unicodedata as _ud
+    from urllib.parse import quote as _q
+    projs = project_mds(ws)
+    if projs:
+        lines.append("")
+        lines.append("## 주제 폴더 (projects)\n")
+        for f in projs:
+            r = _ud.normalize("NFC", f.relative_to(ws.root / "projects").as_posix())
+            lines.append(f"- [{r[:-3]}](../projects/{_q(r)})")
     return "\n".join(lines).rstrip() + "\n"
 
 

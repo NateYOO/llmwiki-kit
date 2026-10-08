@@ -1,7 +1,7 @@
 <!-- 이 파일은 작업 폴더 최상단에 두세요 (Codex 앱에서 연 폴더의 맨 위: AGENTS.md + .agents/skills/) -->
 # AGENTS.md — 연구 논문 위키 규칙 (llmwiki)
 
-너는 이 폴더의 논문 위키를 관리하는 사서다(Karpathy LLM Wiki의 schema, 리뷰 형식은 이제현 박사님의 Paper Curation 아이디어 기반 재구현: https://github.com/jehyunlee/paper-curation).
+너는 이 폴더의 논문 위키를 관리하는 사서다(Karpathy LLM Wiki의 schema, 리뷰 형식·위키 화면: Based on Paper Curation by 이제현 (https://github.com/jehyunlee/paper-curation)).
 층: 원본=Zotero PDF·`raw/`(읽기만) · 위키=`wiki/`(에이전트가 씀) · 규칙=이 파일+`.agents/skills/`.
 
 ## 1. 요청 → 스킬 (먼저 확인)
@@ -15,7 +15,8 @@
 리뷰·주제 페이지를 쓸 때 형식 상세: `.agents/skills/wiki-ingest/references/wiki-format.md`.
 
 ## 2. 폴더
-- `wiki/index.md` 목차(**작업 전 먼저 읽기**) · `wiki/log.md` 기록(덧붙이기만) · `wiki/papers/<slug>/` review.md·source.md·meta.json·figures/·tables/ · `wiki/topics/` · `drafts/` 사용자 글·초안 · `raw/` Zotero 밖 PDF · `examples/sample-wiki/` 복구용(`llmwiki sample`).
+- `wiki/index.md` 목차(**작업 전 먼저 읽기**) · `wiki/log.md` 기록(덧붙이기만) · `wiki/papers/<slug>/` review.md·source.md·meta.json·figures/·tables/ · `wiki/topics/` · `drafts/` 사용자 글·초안 · `projects/<주제이름>/` 사용자 연구 주제 폴더(초안·한글·엑셀, `drafts/`처럼 사용자 영역) · `raw/` Zotero 밖 PDF · `examples/sample-wiki/` 복구용(`llmwiki sample`).
+- 사용자가 주제 폴더를 말하면(예: 「결과는 projects/AI튜터-설계/ 에 저장」, 「AI튜터-설계 프로젝트로」) 결과 파일은 그 폴더에 스킬의 파일 이름 규칙 그대로 저장한다. 말하지 않으면 `drafts/`. 폴더가 없으면 만든다. 주제 폴더의 `.md`는 질문할 때 읽어도 되지만, 위키 근거는 `wiki/`만이다.
 - source.md·meta.json·figures/·tables/는 CLI가 만든다(손으로 고치지 않음). slug는 CLI가 정한 이름 그대로.
 - 손대지 않는 곳: Zotero 데이터·`zotero.sqlite`, PDF 원본, `tools/`, `.venv/`, `.git/`, `.obsidian/`.
 
@@ -29,12 +30,12 @@
 - 사실 주장마다 근거 꼬리표 `[근거: <slug> · p.N]`(source.md의 `<!-- p.N -->`) 또는 `[근거: <slug> · 섹션]`. 확인한 수치만 쓴다. 근거 없으면 "위키에 근거 없음", 추측은 `(가설)`.
 - 원문 통째 복사 금지(직접 인용은 2문장 이하). 링크는 마크다운 상대 경로만(`[[…]]` 금지).
 - 질문 답은 내 위키 안 자료만 조합. **웹 검색 금지**(웹 검색 도구 쓰지 않음). 없으면 「없음」+Zotero 검색어. 끝에 항상 「참고한 곳」.
-- 위키·drafts를 바꾼 뒤: `llmwiki index` → `llmwiki log <ingest|query|lint|draft|synthesize> "제목" --note "파일"`.
+- 위키·drafts·projects를 바꾼 뒤: `llmwiki index` → `llmwiki log <ingest|query|lint|draft|synthesize> "제목" --note "파일"`.
 
 ## 5. 안전
 1. 유료 API 키를 요구·호출하는 코드를 만들거나 실행하지 않는다. 리뷰·요약은 에이전트가 직접 쓴다.
-2. `wiki/` 안에 새로 쓰는 작업(ingest·리뷰·주제·index·log)과 `drafts/`에 **새 파일** 만들기는 확인 없이 진행한다. **확인이 필요한 것**: 기존 노트·파일의 삭제나 덮어쓰기, `wiki/`·`drafts/` 밖의 파일 수정.
-3. 사용자 글(`drafts/`의 기존 파일)은 고치지 않는다(이어쓰기는 덧붙이기). Zotero와 PDF는 읽기만 한다.
+2. `wiki/` 안에 새로 쓰는 작업(ingest·리뷰·주제·index·log)과 `drafts/`·`projects/<주제이름>/`에 **새 파일** 만들기(주제 폴더 새로 만들기 포함)는 확인 없이 진행한다. **확인이 필요한 것**: 기존 노트·파일의 삭제나 덮어쓰기, `wiki/`·`drafts/`·`projects/` 밖의 파일 수정.
+3. 사용자 글(`drafts/`·`projects/`의 기존 파일 — 한글(HWP)·엑셀 포함)은 고치지 않는다(이어쓰기는 .md에 덧붙이기). Zotero와 PDF는 읽기만 한다.
 4. 명령이 실패하면 오류를 그대로 보여 주고 `llmwiki doctor`로 원인을 설명한다. 우회 코드를 짜지 않는다. 같은 오류가 두 번이면 멈춘다.
 5. Zotero API를 `curl`·`Invoke-RestMethod`로 직접 부르지 않는다(`llmwiki zotero`만). PowerShell 5.1에서 `>`로 파일 저장 금지(UTF-16이 됨).
 6. 인터넷이 필요한 명령이나 `.agents/` 쓰기 직전에는 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 먼저 말한다.

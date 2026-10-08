@@ -24,12 +24,11 @@ SOFTWARE.
 NOTICE — scope of this license / 이 라이선스의 범위
 
 1. This MIT license covers only the code and documents written for this
-   starter kit. This kit is NOT the original work it is inspired by. It is an
-   independent re-implementation based on the ideas of:
-     - Paper Curation by Dr. Jehyun Lee (이제현 박사님),
-       https://github.com/jehyunlee/paper-curation  (review format, figure-
-       extraction and related-paper linking ideas; no code was copied — the
-       original repository did not state a license at the time of writing)
+   starter kit. This kit is NOT the original work it is based on. It is
+   based on:
+     - Based on Paper Curation by 이제현 (https://github.com/jehyunlee/paper-curation)
+       (review format, figure-extraction and related-paper linking ideas;
+       the wiki screen code is adapted from it — see THIRD_PARTY_NOTICES.md)
      - Andrej Karpathy, "LLM Wiki" idea file,
        https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
    Credit for those ideas belongs to their authors; any mistakes are ours.

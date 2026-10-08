@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from . import SCHEMA_VERSION
-from .util import RELATED_END, RELATED_HEADING, RELATED_START, REVIEW_HEADINGS, Workspace, read_text, split_frontmatter
+from .util import RELATED_END, RELATED_HEADING, RELATED_START, REVIEW_HEADINGS, Workspace, project_mds, read_text, split_frontmatter
 from .wikiops import SKIP_NAMES, TODO_RE, get_section, iter_links, load_papers, resolve_link, strip_comments
 
 REQUIRED_FM = ["title", "authors", "year", "slug", "category", "tags", "essence", "status", "schema_version",
@@ -84,7 +84,7 @@ def run(ws: Workspace) -> list[Issue]:
             add("ERROR", "frontmatter", rp, "tags는 목록이어야 함")
         for k in fm:
             if isinstance(fm[k], dict):
-                add("WARN", "frontmatter", rp, f"중첩 속성 '{k}' — Obsidian Properties 비호환, 평평하게 펴세요")
+                add("WARN", "frontmatter", rp, f"중첩 속성 '{k}' — 위키 형식은 평평한 키만 써요(wiki-format 2절), 평평하게 펴세요")
         # 점수
         eval_sec = get_section(p.body, "## Evaluation")
         for k, label in SCORE_KEYS.items():
@@ -176,10 +176,11 @@ def run(ws: Workspace) -> list[Issue]:
             if b in related_out and a not in related_out[b]:
                 add("WARN", "related-asym", f"wiki/papers/{b}/review.md", f"{a} → {b} 링크는 있는데 {b} → {a} 링크가 없음 → `llmwiki related --write`")
 
-    # 깨진 링크 + 들어오는 링크 집계 (wiki/, drafts/ 의 모든 md)
+    # 깨진 링크 + 들어오는 링크 집계 (wiki/, drafts/, projects/ 의 모든 md — projects/의 hwp·xlsx 등 md가 아닌 파일은 보지 않음)
     inbound: dict[str, set[str]] = defaultdict(set)
     md_files = [f for f in ws.wiki.rglob("*.md") if f.name not in SKIP_NAMES] if ws.wiki.exists() else []
     md_files += list(ws.drafts.rglob("*.md")) if ws.drafts.exists() else []
+    md_files += project_mds(ws)
     for f in md_files:
         if any(part.startswith(".") for part in f.relative_to(ws.root).parts):
             continue

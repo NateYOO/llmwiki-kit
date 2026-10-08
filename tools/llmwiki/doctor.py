@@ -84,10 +84,10 @@ def run(ws: Workspace | None, offline: bool = False, as_json: bool = False) -> i
             except Exception:  # noqa: BLE001
                 pass
             if ping_ok:
-                warn("Zotero 로컬 API", "Zotero는 실행 중이지만 로컬 API가 응답하지 않음 → Zotero 설정 → 고급 → "
-                     "'이 컴퓨터의 다른 응용 프로그램이 Zotero와 통신하도록 허용' 켜기")
+                warn("Zotero 로컬 API", "Zotero는 실행 중이지만 로컬 API가 응답하지 않음 → "
+                     "Zotero 설정(윈도우: 편집 → 설정, 맥: Zotero → 설정) → 고급 → 기타 → 'Allow other applications on this computer to communicate with Zotero' 체크")
             else:
-                warn("Zotero 로컬 API", f"{str(e)[:120]} (Zotero 실행 + 설정→고급 '다른 응용 프로그램과 통신 허용')")
+                warn("Zotero 로컬 API", f"{str(e)[:120]} (Zotero 실행 + Zotero 설정(윈도우: 편집 → 설정, 맥: Zotero → 설정) → 고급 → 기타 → 'Allow other applications on this computer to communicate with Zotero' 체크)")
         # 데이터 폴더: llmwiki.yaml의 zotero.data_dir 먼저, 없으면 기본 위치 (QA H45①)
         conf_dir = str(zcfg.get("data_dir") or "").strip()
         cands = ([Path(conf_dir).expanduser()] if conf_dir else []) + default_data_dirs()
@@ -196,7 +196,7 @@ def summary_line(rows: list[tuple[str, str, str]], coll_todo: str = "") -> str:
     todo = []
     zot = [n for l, n, _ in rows if l == "WARN" and n.startswith("Zotero")]
     if any(n == "Zotero 로컬 API" for n in zot):
-        todo.append("Zotero 설정 1개 (Zotero 실행 + 설정→고급 '다른 응용 프로그램과 통신 허용')")
+        todo.append("Zotero 설정 1개 (Zotero 실행 + Zotero 설정(윈도우: 편집 → 설정, 맥: Zotero → 설정) → 고급 → 기타 → 'Allow other applications on this computer to communicate with Zotero' 체크)")
     elif coll_todo:
         todo.append(coll_todo)
     net = [n for l, n, _ in rows if l == "WARN" and n in ("arXiv API", "Crossref")]

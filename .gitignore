@@ -12,7 +12,7 @@ wiki/.llmwiki_write_test
 site/
 .llmwiki/
 
-# --- Obsidian(선택 뷰어) 개인 설정 ---
+# --- Obsidian 개인 설정(이 폴더를 옵시디언으로 여는 경우만) ---
 .obsidian/workspace*.json
 .obsidian/cache
 
@@ -28,3 +28,5 @@ site/
 # wiki/log.md
 # drafts/*
 # !drafts/README.md
+# projects/*
+# !projects/README.md

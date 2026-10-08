@@ -3,7 +3,7 @@
 이 폴더의 `source.md`(추출 원문), `figures/`·`tables/`의 PNG(원문 PDF 캡처)는 아래 논문의 arXiv 판본에서 만들었습니다.
 세 논문 모두 arXiv에 **CC BY 4.0** (https://creativecommons.org/licenses/by/4.0/) 으로 공개되어 있어 출처를 밝히고 재배포합니다.
 변경 사항: PDF에서 텍스트를 자동 추출하고(줄바꿈·페이지 표시 추가), 그림·표를 잘라 PNG로 저장했습니다. `review.md`·주제 노트는 이 키트의 한국어 리뷰(새로 쓴 글)이며 원저자의 견해가 아닙니다.
-리뷰 형식: 이제현 박사님의 Paper Curation 아이디어를 바탕으로 만들었습니다. 감사드립니다. (https://github.com/jehyunlee/paper-curation, 코드 복사 없음)
+리뷰 형식: 이제현 박사님의 Paper Curation 아이디어를 바탕으로 만들었습니다. 감사드립니다. (https://github.com/jehyunlee/paper-curation)
 
 | 폴더 | 논문 | 저자 | 출처 |
 |---|---|---|---|

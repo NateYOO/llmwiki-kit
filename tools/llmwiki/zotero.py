@@ -175,7 +175,7 @@ class LocalApiBackend:
         except Exception as e:  # 연결 거부 등
             raise ZoteroUnavailable(f"로컬 API 연결 실패({self.base}): Zotero가 실행 중인지 확인하세요. ({e})") from e
         if status == 403:
-            raise ZoteroUnavailable("로컬 API 403: Zotero 설정 → 고급 → '이 컴퓨터의 다른 응용 프로그램이 Zotero와 통신하도록 허용'을 켜세요.")
+            raise ZoteroUnavailable("로컬 API 403: Zotero 설정(윈도우: 편집 → 설정, 맥: Zotero → 설정) → 고급 → 기타 → 'Allow other applications on this computer to communicate with Zotero' 체크하세요.")
         if status == 404 and path.startswith("/items/"):
             raise ZoteroUnavailable(f"Zotero 항목을 찾지 못했습니다(키 {path.rsplit('/', 1)[-1]}). "
                                     "키는 `llmwiki zotero search \"<영어 키워드>\"` 결과의 key 값(영문 대문자·숫자 8자)입니다.")

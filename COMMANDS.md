@@ -1,6 +1,6 @@
 # COMMANDS.md — 학생이 입력하는 모든 명령
 
-> 이제현 박사님의 Paper Curation(https://github.com/jehyunlee/paper-curation) 아이디어와 Karpathy LLM Wiki를 바탕으로 새로 만든 키트입니다. 감사드립니다.
+> 이제현 박사님의 Paper Curation(https://github.com/jehyunlee/paper-curation) 아이디어와 Karpathy LLM Wiki를 바탕으로 만든 키트입니다. 감사드립니다. Based on Paper Curation by 이제현 (https://github.com/jehyunlee/paper-curation)
 > CLI 옵션은 실제 `--help` 출력으로 확인했습니다 (llmwiki 0.1.0).
 > 표기: macOS `./llmwiki …` · Windows `.\llmwiki.cmd …` (아래 표는 `llmwiki`로 줄여 씀). 권장 모델: GPT-6 Luna(`gpt-6-luna`), 추론 노력 **Medium**.
 
@@ -43,7 +43,7 @@ macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstra
 ```
 다음 경로의 LLM 위키 스타터 키트를 지금 열린 이 폴더의 맨 위에 설치해 줘.
 키트 경로: <키트 폴더 경로>
-1) 복사: AGENTS.md, .agents/ (폴더째), tools/, setup/, llmwiki, llmwiki.cmd, llmwiki.yaml, wiki/(index.md·log.md·papers/·topics/), drafts/README.md, raw/README.md, examples/, .gitattributes
+1) 복사: AGENTS.md, .agents/ (폴더째), tools/, setup/, llmwiki, llmwiki.cmd, llmwiki.yaml, wiki/(index.md·log.md·papers/·topics/), drafts/README.md, projects/README.md, raw/README.md, examples/, .gitattributes
 2) 같은 이름의 파일이 이미 있으면 절대 덮어쓰지 말고 건너뛴 뒤 목록으로 알려 줘.
 3) 이 폴더에 AGENTS.md가 이미 있으면 덮어쓰지 말고 키트 것을 AGENTS.llmwiki.md로 복사한 다음, 두 파일을 어떻게 합칠지 제안만 해 줘(내가 승인하기 전엔 기존 AGENTS.md를 고치지 마).
 4) 끝나면 복사/건너뜀/합치기 제안을 표로 보여 주고, Windows면 powershell -NoProfile -ExecutionPolicy Bypass -File setup\bootstrap-windows.ps1 -AllowNonEmpty, macOS면 bash setup/bootstrap-mac.sh --allow-nonempty 를 실행해 줘. 실행 전에 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 말해 줘.
@@ -95,6 +95,7 @@ macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstra
 | 문구 찾기 | `"learning by teaching" 문구 어디 나와?` |
 | 그림 찾기 | `시스템 구조 그림 찾아줘` |
 | 이어쓰기 | `drafts/문헌고찰.md 이어서 써줘` |
+| 주제 폴더에 저장 | 「… 결과는 projects/<주제이름>/ 에 저장해 주세요」 |
 | 점검 | `$wiki-lint` |
 | 서론 초안 | `$wiki-synthesize 서론 LLM 튜터링의 학습 효과` → `drafts/intro-…-YYYYMMDD.md` |
 | 주제 탐색 | `$wiki-synthesize 주제탐색 AI 교육` → `wiki/topics/…` + `drafts/topic-map-…` |
@@ -158,7 +159,7 @@ $wiki-query 이 논문은 학생 개인정보를 어떻게 다뤘어? (참고: w
 | 증상 | 할 일 |
 |---|---|
 | 설치 출력에 `[E00]`~`[E07]` | `INSTALL_FOR_AGENT.md`의 오류 코드 표. 같은 오류 2번이면 강사에게 |
-| doctor: Zotero 로컬 API WARN | Zotero 실행 + 설정→고급 "다른 응용 프로그램과 통신 허용". 새 채팅에서는 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」(샌드박스 안이면 거짓 WARN) |
+| doctor: Zotero 로컬 API WARN | Zotero 실행 + Zotero 설정(윈도우: 편집 → 설정, 맥: Zotero → 설정) → 고급 → 기타 → 'Allow other applications on this computer to communicate with Zotero' 체크. 새 채팅에서는 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」(샌드박스 안이면 거짓 WARN) |
 | doctor: 실습 컬렉션 WARN | Zotero에 `llmwiki-practice` 컬렉션 만들고 논문 PDF 1편(2편째 선택). 이름이 다르면 `llmwiki.yaml`의 `practice_collection` 수정 |
 | `[오류] … 컬렉션이 여러 개입니다` + 번호 목록 | 번호를 골라 `--collection "<이름>"`으로 다시 |
 | `[오류] …` (Traceback 없음) | 안내의 `해결:`대로. 자세한 내부 오류가 필요하면 `LLMWIKI_DEBUG=1` |
