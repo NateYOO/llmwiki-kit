@@ -74,18 +74,20 @@
     return out;
   }
   function snippet(text, terms) {
-    var low = text.toLowerCase(), pos = -1;
+    text = nfc(text); var low = text.toLowerCase(), pos = -1;
     for (var i = 0; i < terms.length && pos < 0; i++) pos = low.indexOf(terms[i]);
     if (pos < 0) return text.slice(0, 120);
     var s = Math.max(0, pos - 50);
     return (s > 0 ? "…" : "") + text.slice(s, s + 150) + (s + 150 < text.length ? "…" : "");
   }
+  /* 한글이 NFD(자모 분리)로 저장돼 있어도 찾히게 색인·검색어 모두 NFC로 맞춘다(H51) */
+  function nfc(s) { s = String(s || ""); return s.normalize ? s.normalize("NFC") : s; }
   function search(q) {
-    var terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+    var terms = nfc(q).toLowerCase().split(/\s+/).filter(Boolean);
     if (!terms.length) return [];
     var hits = [];
     INDEX.forEach(function (d) {
-      var title = (d.t || "").toLowerCase(), au = (d.a || "").toLowerCase(), body = (d.x || "").toLowerCase();
+      var title = nfc(d.t).toLowerCase(), au = nfc(d.a).toLowerCase(), body = nfc(d.x).toLowerCase();
       var score = 0;
       for (var i = 0; i < terms.length; i++) {
         var t = terms[i], s = 0;
@@ -147,15 +149,20 @@
 
   /* ---------- 홈: 연도·주제 필터 ---------- */
   var fy = document.getElementById("f-year"), fg = document.getElementById("f-group"), fc = document.getElementById("f-count");
+  var hq = document.getElementById("home-q"), hc = document.getElementById("home-count");
   function filter() {
     var cards = document.querySelectorAll("#paper-list .card"), shown = 0;
+    var words = hq ? nfc(hq.value).toLowerCase().split(/\s+/).filter(Boolean) : [];
     cards.forEach(function (c) {
       var okY = !fy.value || c.getAttribute("data-year") === fy.value;
       var okG = !fg.value || ("|" + c.getAttribute("data-groups") + "|").indexOf("|" + fg.value + "|") >= 0;
-      c.hidden = !(okY && okG);
-      if (okY && okG) shown++;
+      var hay = nfc(c.getAttribute("data-text")).toLowerCase();
+      var okQ = words.every(function (w) { return hay.indexOf(w) >= 0; });
+      c.hidden = !(okY && okG && okQ);
+      if (okY && okG && okQ) shown++;
     });
     if (fc) fc.textContent = cards.length + "편 중 " + shown + "편 표시";
+    if (hc) hc.textContent = words.length ? shown + "편 찾음" : "";
   }
-  if (fy && fg) { fy.addEventListener("change", filter); fg.addEventListener("change", filter); filter(); }
+  if (fy && fg) { fy.addEventListener("change", filter); fg.addEventListener("change", filter); if (hq) hq.addEventListener("input", filter); filter(); }
 })();

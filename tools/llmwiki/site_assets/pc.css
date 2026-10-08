@@ -1,0 +1,89 @@
+/* Based on Paper Curation by 이제현 (https://github.com/jehyunlee/paper-curation)
+ * 원본: pipeline/build_topic_index.py(목록 화면: hero·paper-card·search-box)와 pipeline/review_to_html.py(get_css: 리뷰 화면)의 스타일.
+ * 바꾼 점: 외부 글꼴(CDN) 제거, 테마 변수를 고정 색으로(목록=기본 남색, 리뷰=빨강), 이 키트의 클래스(body.home / body.paper)에 맞춤,
+ *          Audio·Deep Research·다운로드 버튼 스타일은 뺌(API 키가 필요한 기능은 화면에 없음). */
+body { font-family: -apple-system, 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; background: #f0f2f5; color: #333; }
+
+/* ---------- 목록 화면 (build_topic_index.py) ---------- */
+body.home .wrap { max-width: 960px; }
+.pc-hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; padding: 3rem 2rem; border-radius: 16px; margin-bottom: 2rem; }
+.pc-hero h1 { font-size: 1.8rem; font-weight: 700; margin: 0 0 0.5rem; color: #fff; }
+.pc-hero .subtitle { opacity: 0.85; font-size: 1rem; }
+.pc-hero .notice { background: #fff8e1; color: #5d4600; border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.85rem; margin: 1rem 0 0; line-height: 1.6; }
+.pc-hero .stats { margin-top: 1.2rem; display: flex; gap: 2.5rem; flex-wrap: wrap; }
+.pc-hero .stat { text-align: center; }
+.pc-hero .stat-num { font-size: 2rem; font-weight: 700; color: #60A5FA; }
+.pc-hero .stat-label { font-size: 0.8rem; opacity: 0.7; }
+.pc-hero .hero-links { margin-top: 1rem; text-align: right; font-size: 0.85rem; }
+.pc-hero .hero-links a { color: #fff; opacity: 0.85; margin-left: 1rem; text-decoration: none; }
+.pc-hero .hero-links a:hover { opacity: 1; text-decoration: underline; }
+.search-box { background: white; border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.search-box input { width: 100%; padding: 0.6rem 1rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; font-family: inherit; outline: none; transition: border-color 0.2s; }
+.search-box input:focus { border-color: #3B82F6; }
+.search-box .search-hint { font-size: 0.75rem; color: #aaa; margin-top: 0.3rem; }
+.search-box .search-count { font-size: 0.8rem; color: #3B82F6; font-weight: 600; margin-top: 0.3rem; }
+.sort-bar { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; flex-wrap: wrap; align-items: center; }
+.sort-bar select { background: white; border: 1px solid #3B82F6; color: #2563EB; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; font-family: inherit; }
+.sort-bar .muted { font-size: 0.8rem; }
+#paper-list.pc-list { display: block; }
+.paper-card { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid #3B82F6; transition: transform 0.15s, box-shadow 0.15s; display: block; }
+.paper-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+.paper-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; gap: 0.6rem; }
+.paper-num { font-size: 0.85rem; color: #888; font-weight: 600; }
+.paper-score { background: #3B82F6; color: white; padding: 0.2rem 0.7rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem; white-space: nowrap; }
+.paper-card h3 { font-size: 1.05rem; color: #1a1a2e; margin: 0 0 0.3rem; }
+.paper-card h3 a { color: #1a1a2e; text-decoration: none; }
+.paper-card h3 a:hover { color: #3B82F6; }
+.paper-card .meta { font-size: 0.8rem; color: #888; margin-bottom: 0.8rem; }
+.paper-card .section { margin-top: 0.8rem; }
+.paper-card .section-label { font-weight: 700; font-size: 0.85rem; color: #3B82F6; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; border-bottom: 1px solid #e8edf3; padding-bottom: 0.2rem; }
+.paper-card .section p { font-size: 0.92rem; color: #444; margin: 0.2rem 0; }
+.paper-fig { margin: 0.8rem 0; text-align: center; }
+.paper-fig img { max-width: min(100%, 600px); max-height: 260px; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.paper-card .chips { margin-top: 0.6rem; }
+.timeline-section { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.timeline-section h2 { color: #2563EB; font-size: 1.1rem; margin: 0 0 1rem; }
+
+/* ---------- 리뷰 화면 (review_to_html.py get_css, 빨강 테마) ---------- */
+body.paper .wrap { max-width: 860px; }
+body.paper h1.pc-title { font-size: 1.4rem; color: #1a1a2e; border-bottom: 3px solid #D63423; padding-bottom: 0.5rem; margin: 0.5rem 0 1rem; }
+body.paper .pc-review h2 { font-size: 1.1rem; color: #D63423; margin: 0 0 0.6rem; padding: 0; border: none; }
+body.paper .pc-review h3 { font-size: 1rem; color: #333; margin: 0.8rem 0 0.4rem; }
+body.paper .pc-review p, body.paper .pc-review li { font-size: 0.93rem; line-height: 1.7; }
+body.paper blockquote.pc-authors { border-left: 4px solid #D63423; margin: 0.8rem 0; padding: 0.6rem 1rem; background: #f0f4f8; border-radius: 0 8px 8px 0; font-size: 0.88rem; color: #555; line-height: 1.7; }
+.section-box { background: white; border-radius: 12px; padding: 1.2rem 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.essence-box { border: 2px solid #8B1A1A; border-radius: 10px; padding: 1rem 1.2rem; margin: 0.8rem 0; background: #FDF8F8; }
+body.paper .essence-box h2 { color: #8B1A1A; }
+.eval-badges { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.6rem 0; }
+.eval-badge { background: #FEF0EF; color: #A62018; padding: 0.2rem 0.7rem; border-radius: 14px; font-size: 0.8rem; font-weight: 600; }
+.dl-bar { margin: 0.5rem 0; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.dl-btn { background: #D63423; color: #fff !important; border: none; border-radius: 8px; padding: 0.45rem 0.9rem; font-size: 0.85rem; cursor: pointer; font-family: inherit; text-decoration: none !important; display: inline-block; }
+.dl-btn:hover { background: #A62018; }
+.dl-btn.ghost { background: #fff; color: #A62018 !important; border: 1px solid #f0c2bd; }
+.dl-note { display: block; margin: 0.35rem 0 0; font-size: 0.78rem; color: #666; line-height: 1.5; }
+.ai-notice { background: #fff8e1; border: 1px solid #f3e0a6; border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.82rem; color: #5d4600; margin: 0.8rem 0; }
+.connections-box { background: white; border-radius: 12px; padding: 1.2rem 1.5rem; margin: 1.2rem 0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+body.paper .connections-box h2 { color: #D63423; margin: 0 0 0.8rem; font-size: 1.05rem; }
+.conn-item { border-left: 3px solid #ddd; padding: 0.6rem 0 0.6rem 1rem; margin-bottom: 0.6rem; }
+.conn-item.alternative { border-left-color: #3B82F6; }
+.conn-item.extension { border-left-color: #10B981; }
+.conn-item.foundation { border-left-color: #8B5CF6; }
+.conn-item.review { border-left-color: #8B5CF6; }
+.conn-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.35rem; }
+.conn-title a { color: #1a1a2e; text-decoration: none; }
+.conn-title a:hover { color: #D63423; text-decoration: underline; }
+.conn-reason { font-size: 0.85rem; color: #555; margin-top: 0.3rem; }
+.conn-rel-badge { display: inline-block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.03em; margin-right: 0.4rem; padding: 0.05rem 0.4rem; border-radius: 4px; background: #f0f0f0; color: #666; vertical-align: middle; }
+.conn-rel-badge.alternative { color: #3B82F6; background: #EAF1FE; }
+.conn-rel-badge.extension { color: #10B981; background: #E7F7F1; }
+.conn-rel-badge.foundation, .conn-rel-badge.review { color: #8B5CF6; background: #F1ECFD; }
+.review-fig { text-align: center; margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-radius: 12px; }
+body.paper .pc-review img { max-width: min(100%, 700px); border: 1px solid #e8e8e8; border-radius: 8px; margin: 0.8rem auto; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+body.paper .pc-review table th { background: #D63423; color: white; }
+.pc-toc { display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; font-size: 0.85rem; margin: 0; padding: 0; list-style: none; }
+.pc-toc a { color: #A62018; text-decoration: none; }
+.pc-toc a:hover { text-decoration: underline; }
+.back { margin-top: 1.5rem; padding: 0.8rem 0; border-top: 2px solid #e0e0e0; }
+.back a { font-weight: 600; text-decoration: none; color: #D63423; }
+.paper-card.card { border: none; border-left: 4px solid #3B82F6; overflow: visible; }
+.js-only-block { display: none; } html.js .js-only-block { display: block; }

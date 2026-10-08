@@ -185,4 +185,27 @@ def remove_sample(root: Path) -> dict:
         shutil.rmtree(dst) if dst.is_dir() else dst.unlink()
         removed.append(rel)
     _write_sample_marker(root, [], removed=True)
-    return {"removed": removed, "kept": kept}
+    unlinked, files = unlink_removed(root, [r.split("/", 1)[1] for r in removed if r.startswith("papers/")])
+    return {"removed": removed, "kept": kept, "unlinked": unlinked, "unlinked_files": files}
+
+
+def unlink_removed(root: Path, slugs: list[str]) -> tuple[int, list[str]]:
+    """뺀 샘플 논문으로 가던 마크다운 링크를 내 리뷰·주제 노트·초안에서 '글자만 남기고' 푼다(H50: 깨진 링크 방지).
+    [보이는 글](../<slug>/review.md) → 보이는 글. 고친 곳 수와 파일 목록을 돌려준다."""
+    import re
+    if not slugs:
+        return 0, []
+    pat = re.compile(r"\[([^\]]*)\]\(([^)\s]*(?:" + "|".join(re.escape(s) for s in slugs) + r")[^)\s]*)\)")
+    total, files = 0, []
+    cands = list((root / "wiki" / "papers").glob("*/review.md")) + list((root / "wiki" / "topics").glob("*.md")) + list((root / "drafts").glob("*.md"))
+    for f in cands:
+        try:
+            text = f.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        new, n = pat.subn(lambda m: m.group(1), text)
+        if n:
+            f.write_text(new, encoding="utf-8", newline="\n")
+            total += n
+            files.append(str(f.relative_to(root)).replace("\\", "/"))
+    return total, files

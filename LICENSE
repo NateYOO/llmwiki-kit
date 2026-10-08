@@ -45,3 +45,5 @@ NOTICE — scope of this license / 이 라이선스의 범위
    under CC BY 4.0 with attribution to their original authors (see
    examples/sample-wiki/ATTRIBUTION.md); they are not covered by the MIT
    license above.
+
+The MIT license above covers this kit's own code. Third-party parts are listed in THIRD_PARTY_NOTICES.md.

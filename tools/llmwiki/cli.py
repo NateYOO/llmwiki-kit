@@ -317,6 +317,14 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
               else "뺄 샘플 논문이 없어요(이미 빠져 있음).")
         for k in res["kept"]:
             print(f"  남김: {k}")
+        if res.get("unlinked"):
+            print(f"내 글에서 샘플 논문으로 가던 링크 {res['unlinked']}곳을 글자만 남기고 풀었어요(깨진 링크 방지): {', '.join(res['unlinked_files'])}")
+        try:
+            from . import lint as _lint
+            sm = _lint.summarize(_lint.run(ws))
+            print(f"위키 점검(lint): ERROR {sm['errors']} · WARN {sm['warnings']}" + (" ✅" if not sm["errors"] else " → Codex에게 「$wiki-lint」라고 말해 고치세요"))
+        except Exception as e:  # noqa: BLE001
+            print(f"위키 점검(lint)을 못 돌렸어요: {e}")
         if msg:
             print(f"위키 화면: {msg}")
         print("다시 넣으려면: llmwiki sample")

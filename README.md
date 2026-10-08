@@ -2,7 +2,8 @@
 
 > **이제현 박사님의 Paper Curation 아이디어를 바탕으로 만들었습니다. 감사드립니다.**
 > 원작: [이제현 박사님 · Paper Curation](https://github.com/jehyunlee/paper-curation) · 위키 구조: [Andrej Karpathy · LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
-> 이 키트는 두 아이디어(리뷰 형식, raw→wiki→schema 3층 구조)를 바탕으로 **새로 구현**했습니다. 원작의 코드는 한 줄도 복사하지 않았습니다(Paper Curation 저장소에는 라이선스가 없어 형식만 참고했습니다).
+> Based on Paper Curation by 이제현 (https://github.com/jehyunlee/paper-curation)
+> 위키 화면(논문 목록·리뷰 화면·지식 네트워크)은 Paper Curation의 화면 코드를 이 키트에 맞게 고쳐 쓴 것이고, 나머지(리뷰 형식, raw→wiki→schema 3층 구조)는 두 아이디어를 바탕으로 새로 구현했습니다. 가져온 부분은 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 있습니다.
 
 0\) 빈 폴더를 만들고 Codex 앱에서 [폴더 열기] (예: C:\llmwiki)\
 1\) 오른쪽 위 복사 버튼\
@@ -145,6 +146,7 @@ Windows에는 Git이 기본으로 없으므로 **Download ZIP**이 표준 수동
 - 원문 PDF는 저장소에 넣지 마세요(저작권). 그림 PNG는 "원문 PDF 캡처 · 로컬 연구용"입니다.
 
 ## 7. 라이선스
-- 이 키트: MIT ([LICENSE](LICENSE)) — 원작이 아닌 재구현이며, 아이디어 출처는 맨 위에 밝혔습니다.
+- 이 키트: MIT ([LICENSE](LICENSE)). MIT 라이선스는 이 키트 자체 코드에 적용되고, 외부에서 가져온 부분(Paper Curation에서 고쳐 쓴 위키 화면 코드, D3.js)은 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 정리했습니다.
+- 위키 화면: Based on Paper Curation by 이제현 (https://github.com/jehyunlee/paper-curation) · 지식 네트워크 그림은 D3.js v7.9.0 (ISC, `tools/llmwiki/site_assets/d3-LICENSE.txt`)을 키트 안에 넣어 인터넷 없이 동작합니다.
 - PyMuPDF는 AGPL-3.0(또는 Artifex 상용) 라이선스입니다. 개인 연구용 로컬 사용 기준입니다.
 - `examples/sample-wiki/`의 원문 추출물·그림은 CC BY 4.0 논문 3편에서 왔습니다([ATTRIBUTION.md](examples/sample-wiki/ATTRIBUTION.md)).

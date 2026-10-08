@@ -1,3 +1,4 @@
+# Based on Paper Curation by 이제현 (https://github.com/jehyunlee/paper-curation) — 목록·리뷰·네트워크 화면 구성 부분
 """`llmwiki site` — wiki/·drafts/를 브라우저로 보는 정적 HTML(site/)로 만든다 (표준 라이브러리 + 기존 의존성만).
 - 상대 링크만 쓴다 → site/index.html을 file://로 열어도 JS 없이 링크로 다닐 수 있다.
 - 검색·필터·「Codex에게 물어보기」 복사 버튼은 JS(외부 라이브러리 없음). 검색 색인은 search-index.json + search-index.js.
@@ -6,6 +7,7 @@ from __future__ import annotations
 
 import html
 import json
+import unicodedata
 import os
 import re
 import shutil
@@ -15,8 +17,8 @@ from typing import Any
 from .mdhtml import convert, slug_id
 from .util import RELATED_END, RELATED_START, Workspace, read_text, split_frontmatter, today
 
-CREDIT = ('이제현 박사님 Paper Curation 아이디어 기반 · '
-          '<a href="https://github.com/jehyunlee/paper-curation" target="_blank" rel="noopener">https://github.com/jehyunlee/paper-curation</a>')
+CREDIT = ('Based on Paper Curation by 이제현 '
+          '(<a href="https://github.com/jehyunlee/paper-curation" target="_blank" rel="noopener">https://github.com/jehyunlee/paper-curation</a>)')
 IMG_EXT = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"}
 REL_LABEL = {"foundation": "🏛 기반 연구", "extension": "🔗 후속 연구", "alternative": "🔄 다른 접근"}
 ASSET_DIR = Path(__file__).with_name("site_assets")
@@ -95,22 +97,13 @@ class Builder:
         self.written.add(dst.resolve())
 
     # ------------------------------------------------------------ 틀
-    def page(self, rel: str, title: str, body: str, *, ask: str, nav: str = "", body_class: str = "") -> None:
+    def page(self, rel: str, title: str, body: str, *, ask: str, nav: str = "", body_class: str = "", bare: bool = False,
+             head_extra: str = "", scripts_extra: str = "") -> None:
         root = self.root_of(rel)
         navs = [("index.html", "논문 목록", "home"), ("network.html", "네트워크", "network"), ("index.html#topics", "주제", "topics"),
                 ("drafts/index.html", "초안·아이디어", "drafts"), ("log.html", "작업 기록", "log")]
         nav_html = "".join(f'<a href="{root}{h}"{" class=\"on\"" if k == nav else ""}>{E(t)}</a>' for h, t, k in navs)
-        doc = f"""<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{E(title)} · 내 논문 위키</title>
-<link rel="stylesheet" href="{root}assets/style.css">
-<script>document.documentElement.classList.add('js');</script>
-</head>
-<body class="{body_class}" data-root="{root}">
-<header class="top">
+        chrome_top = "" if bare else f"""<header class="top">
   <div class="top-in">
     <a class="brand" href="{root}index.html"><span class="logo">📚</span><span><b>내 논문 위키</b><small>나만의 지식 파트너</small></span></a>
     <nav class="nav">{nav_html}</nav>
@@ -122,17 +115,32 @@ class Builder:
   </div>
 </header>
 <main class="wrap">
-{body}
+"""
+        chrome_bottom = "" if bare else f"""
 </main>
 <footer class="foot">
   <div>{CREDIT}</div>
   <div class="muted">Karpathy LLM Wiki 방식 · <code>llmwiki site</code>로 만든 화면 ({today()}) · 위키 원본은 <code>wiki/</code> 폴더의 마크다운</div>
   <noscript><div class="muted">JS가 꺼져 있어 검색·복사 버튼은 숨겼어요. 링크로는 모두 볼 수 있어요. Codex에 물어볼 때: <code>{E(ask)}</code></div></noscript>
 </footer>
+"""
+        doc = f"""<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{E(title)} · 내 논문 위키</title>
+<link rel="stylesheet" href="{root}assets/style.css">
+<link rel="stylesheet" href="{root}assets/pc.css">{head_extra}
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Ctext y=%2214%22 font-size=%2214%22%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body class="{body_class}" data-root="{root}">
+{chrome_top}{body}{chrome_bottom}
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <div id="copybox" class="copybox" hidden><div class="copybox-in"><p>자동 복사가 막혔어요. 아래 글이 선택된 상태예요 — <b>Ctrl+C</b>(맥: ⌘+C)를 누른 뒤 Codex 채팅에 붙여넣으세요.</p><textarea readonly rows="3"></textarea><button type="button" class="close">닫기</button></div></div>
 <script src="{root}search-index.js"></script>
-<script src="{root}assets/app.js"></script>
+<script src="{root}assets/app.js"></script>{scripts_extra}
 </body>
 </html>
 """
@@ -230,12 +238,18 @@ class Builder:
             fig = next(iter(sorted((p.dir / "figures").glob("fig*.png"))), None) if (p.dir / "figures").exists() else None
             thumb = (f'<img class="thumb" src="papers/{E(p.slug)}/figures/{E(fig.name)}" alt="" loading="lazy">' if fig else '<div class="thumb none">📄</div>')
             tags = "".join(f'<span class="chip">{E(lbl.split(" · ", 1)[0] if k.startswith("cl:") else lbl.split(" · ", 1)[1])}</span>' for k, lbl in gs[:3])
-            cards.append(f"""<article class="card" data-year="{E(str(p.fm.get('year') or ''))}" data-groups="{E('|'.join(k for k, _ in gs), quote=True)}">
-  <a class="card-link" href="papers/{E(p.slug)}/index.html">{thumb}
-  <div class="card-body"><h3>{E(p.title)}</h3>
-  <p class="meta">{E(str(p.fm.get('year') or ''))} · {E(au)} {f'<span class="stars" title="종합 점수">{stars}</span>' if stars else ''}</p>
-  <p class="essence">{E(str(p.fm.get('essence') or ''))}</p>
-  <div class="chips">{tags}</div></div></a>
+            n_rel = len({r.get("slug") for r in self.related.get(p.slug, []) if (self.ws.papers / str(r.get("slug", ""))).is_dir()}
+                        | {e["b"] if e["a"] == p.slug else e["a"] for e in self.G["edges"] if p.slug in (e["a"], e["b"])})
+            rbadge = (f'<span class="badge ok">🔗 관련 논문 {n_rel}편</span>' if n_rel else '<span class="badge none">관련 논문 없음</span>')
+            hay = unicodedata.normalize("NFC", " ".join([p.title, au, ", ".join(map(str, authors)), str(p.fm.get("essence") or ""), str(p.fm.get("category") or "")])).lower()
+            fig_html = (f'<div class="paper-fig"><img src="papers/{E(p.slug)}/figures/{E(fig.name)}" alt="" loading="lazy"></div>' if fig else "")
+            cards.append(f"""<article class="card paper-card" data-year="{E(str(p.fm.get('year') or ''))}" data-groups="{E('|'.join(k for k, _ in gs), quote=True)}" data-text="{E(hay, quote=True)}">
+  <div class="paper-header"><span class="paper-num">#{len(cards) + 1} · {E(str(p.fm.get('category') or '분류 없음'))}</span>{f'<span class="paper-score" title="종합 점수">{score}/5</span>' if stars else ''}</div>
+  <h3><a href="papers/{E(p.slug)}/index.html">{E(p.title)}</a></h3>
+  <p class="meta">{E(au)} · {E(str(p.fm.get('date') or p.fm.get('year') or ''))}{f' · <span class="stars">{stars}</span>' if stars else ''}</p>
+  <div class="section"><div class="section-label">Essence</div><p class="essence">{E(str(p.fm.get('essence') or ''))}</p></div>
+  {fig_html}
+  <div class="chips">{rbadge}{tags}</div>
 </article>""")
         year_opts = "".join(f'<option value="{E(y)}">{E(y)}</option>' for y in years)
         grp_opts = "".join(f'<option value="{E(k, quote=True)}">{E(v)}</option>' for k, v in sorted(groups.items(), key=lambda kv: kv[1]))
@@ -251,17 +265,29 @@ class Builder:
         dt = getattr(self, "draft_titles", {})
         drafts_html = "".join(f'<li><a href="drafts/{E(f.stem)}.html">{E(dt.get(f.stem, f.stem))}</a> <span class="muted small">{E(f.name)}</span></li>' for f in self.drafts[:6]) or '<li class="muted">아직 초안이 없어요.</li>'
         empty = "" if self.papers else '<p class="empty">아직 위키에 논문이 없어요. Codex 채팅에 <code>$wiki-ingest 최근 1편</code> 이라고 말해 시작하세요.</p>'
-        body = f"""<section class="hero">
-  <h1>내 논문 위키</h1>
-  <p>Zotero에서 넣은 논문 <b>{len(self.papers)}편</b>의 리뷰·그림·관련 논문을 한눈에. 자세히 보고 싶은 논문을 누르고, 궁금한 점은 <b>💬 Codex에게 물어보기</b>로 채팅에 가져가세요.</p>
+        body = f"""<section class="pc-hero">
+  <h1>내 논문 위키 — Paper Curation</h1>
+  <p class="subtitle">Zotero에서 넣은 논문의 리뷰·그림·관련 논문을 한눈에. 궁금한 점은 <b>💬 Codex에게 물어보기</b>로 채팅에 가져가세요.</p>
+  <div class="notice">⚠️ 이 위키의 리뷰·요약은 Codex(생성형 AI)가 내 논문을 읽고 정리한 결과예요. 논문 원문의 저작권은 <b>원저작자</b>에게 있고, 정확한 내용은 원문 페이지에서 확인하세요.</div>
+  <div class="stats">
+    <div class="stat"><div class="stat-num">{len(self.papers)}</div><div class="stat-label">리뷰 완료</div></div>
+    <div class="stat"><div class="stat-num">{len({str(p.fm.get('category') or '분류 없음') for p in self.papers})}</div><div class="stat-label">주제 분류</div></div>
+    <div class="stat"><div class="stat-num">{today()}</div><div class="stat-label">큐레이션 일자</div></div>
+  </div>
+  <div class="hero-links"><a href="network.html">🕸 지식 네트워크</a><a href="drafts/index.html">📝 초안·아이디어</a><a href="#topics">🗂 주제</a></div>
 </section>
-<section class="filters js-only" aria-label="필터">
+<section class="search-box js-only-block">
+  <input id="home-q" type="search" placeholder="논문 거르기: 제목·저자·요약 (예: 튜터, RCT)" autocomplete="off" aria-label="논문 거르기">
+  <div class="search-hint">리뷰 본문·그림 설명까지 찾으려면 맨 위 검색칸(단축키 /)을 쓰세요.</div>
+  <div id="home-count" class="search-count"></div>
+</section>
+<section class="sort-bar filters js-only" aria-label="필터">
   <label>연도 <select id="f-year"><option value="">전체</option>{year_opts}</select></label>
   <label>주제·군집 <select id="f-group"><option value="">전체</option>{grp_opts}</select></label>
   <span id="f-count" class="muted"></span>
 </section>
 {empty}
-<section class="grid" id="paper-list">
+<section class="pc-list" id="paper-list">
 {''.join(cards)}
 </section>
 <section class="cols">
@@ -293,40 +319,67 @@ class Builder:
         toc_html = "".join(f'<li class="l{lv}"><a href="#{hid}">{E(t)}</a></li>' for lv, hid, t in toc if lv <= 3)
         pages = sorted({int(x) for x in re.findall(re.escape(p.slug) + r"\s*·\s*p\.\s*(\d+)", p.body)})
         pages_html = " ".join(f'<a class="pg" href="source.html#p-{n}">p.{n}</a>' for n in pages) or '<span class="muted">인용한 페이지 없음</span>'
-        rel_rows, seen = [], set()
+        # 같이 보면 좋은 논문(원본 review_to_html.py 의 connections-box 구성) = related.json + 리뷰 안 근거 링크
+        from .site_network import _agent_reasons
+        agent = _agent_reasons(self, p.slug)
+        items: dict[str, dict] = {}
         for r in self.related.get(p.slug, []):
-            if (self.ws.papers / r.get("slug", "")).is_dir() and r["slug"] not in seen:
-                seen.add(r["slug"])
-                rel_rows.append(f'<li><a href="../{E(r["slug"])}/index.html">{E(r.get("title") or r["slug"])}</a>'
-                                f'<span class="muted small"> {E(REL_LABEL.get(r.get("relation"), ""))} · {E(str(r.get("reason", "")))}</span></li>')
+            sl = str(r.get("slug", ""))
+            if (self.ws.papers / sl).is_dir() and sl not in items:
+                items[sl] = {"title": r.get("title") or sl, "rows": [(str(r.get("relation") or "alternative"),
+                             REL_LABEL.get(r.get("relation"), "🔄 관련"), str(r.get("reason", "")))]}
         for e in self.G["edges"]:  # 리뷰 안 근거 링크로만 이어진 논문도
             other = e["b"] if e["a"] == p.slug else e["a"] if e["b"] == p.slug else None
-            if other and other not in seen:
-                seen.add(other)
-                rel_rows.append(f'<li><a href="../{E(other)}/index.html">{E(self.G["papers"][other].title)}</a><span class="muted small"> · 리뷰 안 링크</span></li>')
-        n_rel = len(rel_rows)
-        rel_html = "".join(rel_rows) or '<li class="muted">관련 논문 없음 — 논문을 더 넣으면 연결이 생겨요.</li>'
+            if other:
+                items.setdefault(other, {"title": self.G["papers"][other].title, "rows": []})
+        for sl, it in items.items():
+            if sl in agent:
+                it["rows"].append(("review", "📝 리뷰 근거", agent[sl]))
+        n_rel = len(items)
+        conn_html = "".join(
+            f'<div class="conn-item {E(it["rows"][0][0] if it["rows"] else "review")}"><div class="conn-title"><a href="../{E(sl)}/index.html">{E(it["title"])}</a></div>'
+            + "".join(f'<div class="conn-reason"><span class="conn-rel-badge {E(k)}">{E(lbl)}</span>{E(why)}</div>' for k, lbl, why in it["rows"]) + "</div>"
+            for sl, it in items.items()) or '<p class="muted">관련 논문 없음 — 논문을 더 넣으면 연결이 생겨요.</p>'
         badge = (f'<a class="badge ok" href="#related-papers">🔗 관련 논문 {n_rel}편</a>' if n_rel
                  else '<span class="badge none">관련 논문 없음(논문을 더 넣으면 연결이 생겨요)</span>')
         figs = sorted((p.dir / "figures").glob("*.png")) if (p.dir / "figures").exists() else []
         strip = "".join(f'<a href="figures/figures.html"><img src="figures/{E(f.name)}" alt="{E(f.stem)}" loading="lazy"></a>' for f in figs[:8])
         tags = "".join(f'<span class="chip">#{E(str(t))}</span>' for t in (fm.get("tags") or []) if str(t) != "paper")
         score = fm.get("score")
-        head = f"""<section class="paper-head">
-  <p class="crumb"><a href="../../index.html">논문 목록</a> › {E(str(fm.get('category') or '분류 없음'))}</p>
-  <h1>{E(p.title)}</h1>
-  <p class="meta">{E(', '.join(map(str, authors)))} · {E(str(fm.get('year') or ''))}{(' · ' + E(str(fm.get('venue')))) if fm.get('venue') else ''}{f' · 종합 {score}/5' if score else ''}</p>
-  <div class="chips">{badge} {tags}</div>
-  <p class="links">{' · '.join(links)} · <a href="../../network.html">네트워크에서 보기</a></p>
-  {f'<div class="strip">{strip}</div>' if strip else ''}
-</section>"""
-        side = f"""<aside class="side">
-  <div class="box"><h4>목차</h4><ul class="toc">{toc_html}</ul></div>
-  <div class="box"><h4>원문 페이지 <span class="muted small">(리뷰가 인용한 곳)</span></h4><p class="pages">{pages_html}</p></div>
-  <div class="box"><h4>관련 논문 {f"{n_rel}편" if n_rel else "없음"}</h4><ul class="plain small">{rel_html}</ul></div>
-  <div class="box small muted">위키 파일: <code>wiki/papers/{E(p.slug)}/review.md</code></div>
-</aside>"""
-        body = head + f'<div class="paper-layout">{side}<article class="md review">{content}</article></div>'
+        # 리뷰 본문: h2 마다 흰 상자(section-box), Essence 는 essence-box, Evaluation 점수는 배지, Related Papers 는 connections-box
+        parts = re.split(r'(?=<h2 id=")', content)
+        boxes = [parts[0]] if parts[0].strip() else []
+        for part in parts[1:]:
+            m = re.match(r'<h2 id="([^"]+)">(.*?)</h2>', part)
+            hid = m.group(1) if m else ""
+            if hid == "essence":
+                boxes.append(f'<div class="essence-box" id="sec-{hid}">{part}</div>')
+            elif hid == "evaluation":
+                part = re.sub(r"<ul>((?:<li>[^<]*?:\s*\d(?:\.\d)?/5</li>)+)</ul>",
+                              lambda mm: '<div class="eval-badges">' + re.sub(r"<li>(.*?)</li>", r'<span class="eval-badge">\1</span>', mm.group(1)) + "</div>", part, count=1)
+                boxes.append(f'<div class="section-box" id="sec-{hid}">{part}</div>')
+            elif hid == "related-papers":
+                k = part.find("<h3")
+                agent_part = part[k:] if k >= 0 else ""
+                boxes.append(f'<div class="connections-box" id="sec-{hid}"><h2 id="related-papers">같이 보면 좋은 논문 <span class="muted small">({n_rel}편)</span></h2>{conn_html}'
+                             f'<p class="muted small">자동 계산(llmwiki related: 어휘 유사도·저자·연도) + 리뷰에 근거와 함께 적은 연결 · <a href="../../network.html">🕸 네트워크에서 보기</a></p>{agent_part}</div>')
+            else:
+                boxes.append(f'<div class="section-box" id="sec-{hid}">{part}</div>')
+        if not any('id="sec-related-papers"' in b for b in boxes):
+            boxes.append(f'<div class="connections-box"><h2 id="related-papers">같이 보면 좋은 논문</h2>{conn_html}</div>')
+        ask = f"$wiki-query <질문을 여기에> (참고: wiki/papers/{p.slug}/review.md)"
+        head = f"""<p class="crumb"><a href="../../index.html">논문 목록</a> › {E(str(fm.get('category') or '분류 없음'))}</p>
+<h1 class="pc-title">{E(p.title)}</h1>
+<div class="dl-bar"><button class="dl-btn ask-inline" type="button" data-ask="{E(ask, quote=True)}">💬 Codex에게 물어보기</button>
+<a class="dl-btn ghost" href="../../network.html">🕸 네트워크에서 보기</a> {badge}</div>
+<span class="dl-note">질문 문장이 복사돼요 → Codex 채팅에 붙여넣고 &lt;질문을 여기에&gt;만 바꾸세요. (API 키 필요 없음)</span>
+<blockquote class="pc-authors"><b>저자</b>: {E(', '.join(map(str, authors)))} | <b>날짜</b>: {E(str(fm.get('date') or fm.get('year') or ''))}{(' | <b>학회·저널</b>: ' + E(str(fm.get('venue')))) if fm.get('venue') else ''}{f' | <b>종합</b>: {score}/5' if score else ''}<br>{' · '.join(links)}</blockquote>
+<div class="ai-notice">⚠️ 이 페이지의 요약·평가·해설은 <b>Codex(생성형 AI)</b>가 내 위키에 정리한 2차 분석이에요. 논문 원문의 저작권은 <b>원저작자</b>에게 있고, 정확한 내용은 원문 페이지(아래 p.번호)에서 확인하세요.</div>
+<div class="section-box"><h2>목차</h2><ul class="pc-toc">{toc_html}</ul>
+<p class="small" style="margin-top:.6rem"><b>원문 페이지</b> <span class="muted">(리뷰가 인용한 곳)</span> {pages_html}</p>
+{f'<div class="strip">{strip}</div>' if strip else ''}<div class="chips">{tags}</div>
+<p class="muted small">위키 파일: <code>wiki/papers/{E(p.slug)}/review.md</code></p></div>"""
+        body = head + f'<article class="md review pc-review">{"".join(boxes)}</article><div class="back"><a href="../../index.html">← 논문 목록으로</a></div>'
         self.page(rel, p.title, body, ask=f"$wiki-query <질문을 여기에> (참고: wiki/papers/{p.slug}/review.md)", body_class="paper")
         # 검색 색인: 논문 1개 + 섹션별
         self.index.append({"k": "논문", "t": p.title, "u": rel, "a": ", ".join(map(str, authors)), "y": str(fm.get("year") or ""),
@@ -416,17 +469,16 @@ class Builder:
                              + ", ".join(f'<a href="papers/{E(e["a"])}/index.html">{E(G["papers"][e["a"]].title[:40])}</a> ↔ '
                                          f'<a href="papers/{E(e["b"])}/index.html">{E(G["papers"][e["b"]].title[:40])}</a>' for e in x["edges"][:4]) + "</li>" for x in cl)
         notes_html = "".join(f'<li><a href="topics/{E(k)}.html">{E(v["title"])}</a> <span class="muted small">논문 {len(v["papers"])}편</span></li>' for k, v in G["notes"].items())
-        body = f"""<section class="hero"><h1>지식 네트워크</h1>
-<p>점 하나가 논문 한 편이에요. <b>색</b>은 주제(분류), <b>선 굵기</b>는 얼마나 관련 있는지(어휘 유사도), 진한 선은 리뷰에 근거와 함께 이어 둔 연결이에요. 점을 누르면 그 논문 페이지로 가요.</p></section>
-<div class="net-wrap"><div class="net-box">{graph}</div>
-<aside class="box legend"><h4>주제(분류)</h4><ul class="plain">{legend}</ul>
-<p class="muted small">논문 {len(G["papers"])}편 · 연결 {len(G["edges"])}개<br>선이 굵을수록 더 관련 있음<br>점이 클수록 연결이 많음</p></aside></div>
-<section class="cols">
-<div class="panel"><h2>주제 사이 연결</h2><ul class="plain">{cross_html or '<li class="muted">아직 주제 사이 연결이 없어요.</li>'}</ul>
-<h3>주제 노트</h3><ul class="plain">{notes_html or '<li class="muted">아직 주제 노트가 없어요.</li>'}</ul></div>
-<div class="panel"><h2>주제별 논문</h2><div class="stack">{groups_html}</div></div>
-</section>"""
-        self.page(rel, "지식 네트워크", body, ask="$wiki-query 내 위키 논문들은 서로 어떻게 연결돼 있어? 연결이 약한 주제 사이에서 연구 아이디어를 찾아 줘", nav="network", body_class="network")
+        from . import site_network
+        data = site_network.build_data(self, G)
+        self.write("network-data.js", unicodedata.normalize("NFC", site_network.data_js(data)))
+        extra = f"""<h3>주제 사이 연결</h3><ul class="plain">{cross_html or '<li class="muted">아직 주제 사이 연결이 없어요.</li>'}</ul>
+<h3>주제 노트</h3><ul class="plain">{notes_html or '<li class="muted">아직 주제 노트가 없어요.</li>'}</ul>
+<h3>주제별 논문</h3><div class="stack">{groups_html}</div>"""
+        body = site_network.body_html(data, graph, legend, extra, CREDIT)
+        self.page(rel, "지식 네트워크", body, ask="$wiki-query 내 위키 논문들은 서로 어떻게 연결돼 있어? 연결이 약한 주제 사이에서 연구 아이디어를 찾아 줘",
+                  nav="network", body_class="network", bare=True, head_extra='\n<link rel="stylesheet" href="assets/network.css">',
+                  scripts_extra='\n<script src="assets/d3.v7.min.js"></script>\n<script src="network-data.js"></script>\n<script src="assets/network.js"></script>')
 
     def build_drafts(self) -> None:
         rows = []
@@ -457,9 +509,10 @@ class Builder:
         self.page("log.html", "작업 기록", f'<article class="md">{content}</article>', ask="$wiki-query <질문을 여기에> (참고: wiki/log.md)", nav="log")
 
     def assets(self) -> None:
-        for name in ("style.css", "app.js"):
+        for name in ("style.css", "pc.css", "app.js", "network.css", "network.js", "d3.v7.min.js", "d3-LICENSE.txt"):
             self.write(f"assets/{name}", (ASSET_DIR / name).read_text(encoding="utf-8"))
-        data = json.dumps(self.index, ensure_ascii=False, separators=(",", ":"))
+        # 한글 제목이 NFD(맥에서 온 파일 등)여도 검색되게 NFC로 맞춘다(H51)
+        data = unicodedata.normalize("NFC", json.dumps(self.index, ensure_ascii=False, separators=(",", ":")))
         self.write("search-index.json", data)
         self.write("search-index.js", "window.LLMWIKI_INDEX=" + data.replace("</", "<\\/") + ";\n")
 
