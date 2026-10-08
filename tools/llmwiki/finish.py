@@ -10,6 +10,14 @@ from .util import RELATED_HEADING, REVIEW_HEADINGS, Workspace, read_text
 from .wikiops import TODO_RE, get_section, load_paper, strip_comments
 
 
+def _meta(pdir) -> dict:
+    import json
+    try:
+        return json.loads((pdir / "meta.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
 def heading_fill(body: str) -> tuple[int, int, list[str]]:
     """채워진 헤딩 수 / 전체(7개 + Related Papers) / 빈 헤딩 이름."""
     heads = list(REVIEW_HEADINGS) + [RELATED_HEADING]
@@ -57,6 +65,9 @@ def run(ws: Workspace, slug: str, *, op: str = "ingest", note: str = "") -> dict
     filled, total, empty = heading_fill(read_text(pdir / "review.md"))
     others_err = sum(1 for i in issues if i.level == "ERROR") - len(errs)
     failed = [s for s in steps if s["rc"] != 0]
+    scanned = bool((p_meta := _meta(pdir)).get("scanned"))
+    if scanned:
+        empty = []  # 스캔본 자리 표시: 리뷰를 쓸 수 없으니 헤딩 검사 대신 안내만(lint는 WARN)
     ok = not failed and not errs and not empty
 
     def do_log():
@@ -80,6 +91,10 @@ def run(ws: Workspace, slug: str, *, op: str = "ingest", note: str = "") -> dict
     steps.append({"step": "site", "rc": 0, "skipped": msg.startswith("화면 갱신 실패"), "detail": msg})
     if ok:
         result, last = "RESULT: OK", f"넣기 완료 ✅ {title} · 헤딩 {filled}/{total} · lint ERROR 0 (이 논문 WARN {len(warns)})"
+        if scanned:
+            last = f"넣기 완료(제목·저자만) ⚠️ {title} — 스캔본이라 리뷰는 비워 뒀어요. 글자가 들어 있는 PDF를 넣으면 다시 쓸 수 있어요. (lint ERROR 0)"
+        elif p_meta.get("meta_pending"):
+            last += " · 저자는 잠시 뒤 `llmwiki meta --refresh " + slug + "` 로 채우기"
     else:
         todo = [f"{s['step']} 실패({s['detail']})" for s in failed]
         if empty:

@@ -20,6 +20,15 @@ from .wikiops import tables_listing
 from urllib.parse import quote as _quote, unquote as _unquote
 
 
+
+def _authors(v) -> list[str]:
+    """저자 목록 정리: 비었거나(서지 사이트가 바빴을 때) 문자열·None이 섞여도 화면이 깨지지 않게."""
+    if not v:
+        return []
+    if isinstance(v, str):
+        v = [v]
+    return [str(a).strip() for a in v if a is not None and str(a).strip() and str(a).strip() != "None"]
+
 def _href(path: str) -> str:
     """한글 폴더·파일 이름: NFC로 맞추고 URL 인코딩(맥 NFD 대비)."""
     return _quote(unicodedata.normalize("NFC", path), safe="/#._-~")
@@ -243,7 +252,7 @@ class Builder:
         for p in sorted(self.papers, key=lambda p: (-(int(p.fm.get("year") or 0)), p.title.lower())):
             gs = self.groups_of(p)
             groups.update(dict(gs))
-            authors = p.fm.get("authors") or p.meta.get("authors") or []
+            authors = _authors(p.fm.get("authors") or p.meta.get("authors"))
             au = ", ".join(map(str, authors[:3])) + (" 외" if len(authors) > 3 else "")
             score = p.fm.get("score")
             stars = ("★" * int(score) + "☆" * (5 - int(score))) if isinstance(score, int) and 0 < score <= 5 else ""
@@ -319,7 +328,7 @@ class Builder:
         content = convert(body_md, self.linker(p.review, rel), toc, table_note=note)
         content = self.cite_links(content, rel)
         fm = p.fm
-        authors = fm.get("authors") or p.meta.get("authors") or []
+        authors = _authors(fm.get("authors") or p.meta.get("authors"))
         url = fm.get("url") or p.meta.get("url") or ""
         doi = fm.get("doi") or ""
         links = [f'<a href="source.html">추출 원문(페이지별)</a>']
@@ -388,7 +397,7 @@ class Builder:
 <div class="dl-bar"><button class="dl-btn ask-inline" type="button" data-ask="{E(ask, quote=True)}">💬 Codex에게 물어보기</button>
 <a class="dl-btn ghost" href="../../network.html">🕸 네트워크에서 보기</a> {badge}</div>
 <span class="dl-note">질문 문장이 복사돼요 → Codex 채팅에 붙여넣고 &lt;질문을 여기에&gt;만 바꾸세요. (API 키 필요 없음)</span>
-<blockquote class="pc-authors"><b>저자</b>: {E(', '.join(map(str, authors)))} | <b>날짜</b>: {E(str(fm.get('date') or fm.get('year') or ''))}{(' | <b>학회·저널</b>: ' + E(str(fm.get('venue')))) if fm.get('venue') else ''}{f' | <b>종합</b>: {score}/5' if score else ''}<br>{' · '.join(links)}</blockquote>
+<blockquote class="pc-authors"><b>저자</b>: {E(', '.join(map(str, authors)) or '(저자 확인 필요)')} | <b>날짜</b>: {E(str(fm.get('date') or fm.get('year') or ''))}{(' | <b>학회·저널</b>: ' + E(str(fm.get('venue')))) if fm.get('venue') else ''}{f' | <b>종합</b>: {score}/5' if score else ''}<br>{' · '.join(links)}</blockquote>
 <div class="ai-notice">⚠️ 이 페이지의 요약·평가·해설은 <b>Codex(생성형 AI)</b>가 내 위키에 정리한 2차 분석이에요. 논문 원문의 저작권은 <b>원저작자</b>에게 있고, 정확한 내용은 원문 페이지(아래 p.번호)에서 확인하세요.</div>
 <div class="section-box"><h2>목차</h2><ul class="pc-toc">{toc_html}</ul>
 <p class="small" style="margin-top:.6rem"><b>원문 페이지</b> <span class="muted">(리뷰가 인용한 곳)</span> {pages_html}</p>

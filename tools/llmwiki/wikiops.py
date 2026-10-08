@@ -142,6 +142,7 @@ def ref_line(meta: dict) -> str:
 
 def new_frontmatter(meta: dict, slug: str) -> dict[str, Any]:
     authors = meta.get("authors") or []
+    extra = {"meta_pending": True} if meta.get("meta_pending") and not authors else {}
     return {
         "title": meta.get("title", ""),
         "authors": authors,
@@ -166,12 +167,38 @@ def new_frontmatter(meta: dict, slug: str) -> dict[str, Any]:
         "status": "draft",
         "schema_version": SCHEMA_VERSION,
         "review_date": "",
+        **extra,
     }
+
+
+def scanned_stub(meta: dict, slug: str) -> str:
+    """글자 층이 없는 스캔본 PDF: 제목·저자만 넣은 자리 표시 리뷰(status: draft, scanned: true). OCR은 하지 않는다."""
+    fm = new_frontmatter(meta, slug)
+    fm["scanned"] = True
+    authors = ", ".join(meta.get("authors") or []) or "(저자 확인 필요)"
+    hold = "_스캔본이라 비워 둠 — 글자가 들어 있는 PDF(출판사·arXiv 판)를 넣으면 채워요._"
+    secs = "\n\n".join(f"{h}\n\n{hold}" for h in REVIEW_HEADINGS)
+    return dump_frontmatter(fm) + f"""
+# {meta.get('title', slug)}
+
+> **저자**: {authors} | **날짜**: {meta.get('date') or meta.get('year') or 'N/A'} | {ref_line(meta)}
+> ⚠️ 이 PDF는 글자가 없는 스캔본이라 내용을 읽을 수 없어요. 제목·저자만 넣어 두었어요. 글자가 들어 있는 PDF를 넣으면 리뷰를 쓸 수 있어요.
+
+---
+
+{secs}
+
+{RELATED_HEADING}
+
+{RELATED_START}
+_아직 계산 전입니다. `llmwiki related --write` 를 실행하세요._
+{RELATED_END}
+"""
 
 
 def review_skeleton(meta: dict, slug: str) -> str:
     fm = new_frontmatter(meta, slug)
-    authors = ", ".join(meta.get("authors") or []) or "N/A"
+    authors = ", ".join(meta.get("authors") or []) or ("(저자 확인 필요)" if meta.get("meta_pending") else "N/A")
     figs = meta.get("figures") or []
     tabs = meta.get("tables") or []
     fig_hint = "; ".join(f"Fig {f['n']}(p.{f['page']}): {f['caption'][:60]}" for f in figs[:8]) or "추출된 그림 없음"
@@ -251,8 +278,11 @@ def tables_listing(meta: dict, tables_dir: Path | None = None) -> str:
 
 # ------------------------------------------------------------------ index & log
 def _short_authors(authors: list) -> str:
+    if isinstance(authors, str):
+        authors = [authors]
+    authors = [a for a in (authors or []) if a and str(a).strip()]
     if not authors:
-        return ""
+        return "저자 확인 필요"
     first = str(authors[0]).split()[-1] if str(authors[0]).split() else str(authors[0])
     return first + (" 외" if len(authors) > 1 else "")
 

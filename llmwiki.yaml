@@ -13,7 +13,7 @@ zotero:
     collections: ""
 network:
   enabled: true         # false면 Crossref/arXiv/OpenAlex 보강을 하지 않음(오프라인 강의실)
-  timeout: 12
+  timeout: 6             # 요청 1번 최대 대기(초). 바쁘면 짧게 2번 더 시도, 논문당 서지 조회는 최대 약 18초
   mailto: ""            # Crossref 예절용 이메일(선택)
 related:
   top_k: 5              # 논문당 관련 논문 후보 수

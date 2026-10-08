@@ -12,8 +12,9 @@ PALETTE = ["#2f5bea", "#e8590c", "#0f9d74", "#c2255c", "#7048e8", "#d4a106", "#1
 
 
 def short_label(p) -> str:
-    authors = p.fm.get("authors") or p.meta.get("authors") or []
-    first = str(authors[0]).split()[-1] if authors else p.slug.split("-")[1] if "-" in p.slug else p.slug
+    authors = [str(a) for a in (p.fm.get("authors") or p.meta.get("authors") or []) if a and str(a).split()] \
+        if not isinstance(p.fm.get("authors"), str) else [p.fm["authors"]]
+    first = authors[0].split()[-1] if authors and authors[0].split() else p.slug.split("-")[1] if "-" in p.slug else p.slug
     return f"{first} {p.fm.get('year') or ''}".strip()
 
 

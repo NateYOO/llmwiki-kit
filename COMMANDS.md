@@ -69,6 +69,7 @@ macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstra
 | `llmwiki zotero get <KEY>` | 항목 하나의 서지·PDF 경로 | |
 | `llmwiki zotero import <KEY>` | Zotero 항목 PDF를 위키로 추출 | `--offline`, `--force`, `--slug` |
 | `llmwiki extract "<PDF>"` | PDF 직접 추출 → `wiki/papers/<slug>/` | `--offline`, `--force`, `--slug` |
+| `llmwiki meta --refresh <slug>` | 저자·연도 등 **빈 서지 칸만** 다시 채우기(arXiv·Crossref·OpenAlex). 넣을 때 서지 사이트가 바빠 저자가 비었으면(`meta_pending`, lint WARN) 잠시 뒤 실행. 있는 값은 바꾸지 않음, review.md frontmatter도 빈 칸만 | `--offline` |
 | `llmwiki finish <slug>` | 넣기 마무리 한 번에: related --write → index → lint → log(**완료일 때만**, 같은 날 같은 제목은 한 번만). 단계별 rc, 이 논문 문제만 따로, 마지막 줄 `넣기 완료 ✅ …` / `넣기 미완료 ❌ / 고칠 것: …` (앞에 `RESULT: OK/FAIL`) | `--op`, `--note`, `--json` |
 | `llmwiki related --write` | 관련 논문 자동 블록 갱신(모든 리뷰) | `--top N`, `--slug` |
 | `llmwiki related <slug>` | 한 논문의 이웃: 관계·링크 방향·공유 주제·공저자 | `--json` |

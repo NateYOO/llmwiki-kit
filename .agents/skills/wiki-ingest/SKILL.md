@@ -14,6 +14,7 @@ macOS/Linux `./llmwiki`, Windows `.\llmwiki.cmd` 로 바꿔 실행한다.
 |---|---|
 | 아무것도 없음 · "최근" · "최근 1편" · "컬렉션에서 1편" | `llmwiki zotero next` (묻지 않음) |
 | "컬렉션 X에서" | `llmwiki zotero next --collection "X"` |
+| "저자 다시 채워 줘" · "다시 해 줘"(서지 사이트가 바빴던 논문) | `llmwiki meta --refresh <slug>` → 나온 한 줄을 그대로 전한다(있는 값은 안 바뀜) |
 | PDF 경로 (`.pdf`로 끝남) | 2단계 B로 |
 | Zotero 항목 키 (8자 영숫자, 예 `ABCD1234`) | `llmwiki zotero import <KEY>` |
 | 논문 제목·저자·키워드 | `llmwiki zotero search "<영어 키워드>"` |
@@ -30,10 +31,12 @@ macOS/Linux `./llmwiki`, Windows `.\llmwiki.cmd` 로 바꿔 실행한다.
    - 네트워크가 막혔다는 오류/지연이 있으면 `--offline`을 붙여 다시.
    - `status`가 `duplicate`이면 이미 있는 논문이다 → 알려 주고 멈춘다(원하면 `--force`, review.md는 보존).
    - `slug`, `figures`, `tables`, `low_confidence_crops`, `warnings`를 기억한다.
+   - `notice`가 있으면 그 한 줄을 그대로 전하고 **계속 진행**한다(서지 사이트가 바빠 저자가 비면 `meta_pending: true` — lint WARN일 뿐 오류 아님. 나중에 `llmwiki meta --refresh <slug>`).
+   - 결과에 `"scanned": true`(글자 없는 스캔본)면 `notice`를 그대로 전하고 **리뷰를 쓰지 않는다** — 제목·저자만 넣은 자리 표시가 이미 있다. `llmwiki finish <slug>`만 실행하고 멈춘다(OCR 하지 않음).
 3. **읽기** — `wiki/papers/<slug>/` 에서
    - `meta.json`(서지·초록) → `source.md` 전체(페이지 표시 `<!-- p.N -->`) → `figures/figures.md`, `tables/tables.md`.
    - 그림 후보 PNG를 **직접 열어 본다**(최대 5장). **표는 PNG로만 본다**: 숫자는 `tables/tableN.png`를 직접 열어 확인한다. `meta.json` 표 항목의 `text`는 화면에 안 보이는 검색용 글자라 표를 찾는 데만 쓴다(칸이 어긋날 수 있어 숫자 근거로 쓰지 않음).
-   - 텍스트가 거의 없으면(스캔 PDF 경고) 사용자에게 알리고 멈춘다.
+   - 텍스트가 거의 없으면(스캔 PDF) 위 `scanned` 안내대로 finish만 하고 멈춘다.
 4. **요약 후 바로 진행** — 서지(제목·연도·제1저자·DOI)와 핵심 2–3줄, 정한 `category`를 짧게 보여 주고 **묻지 않고** 5로 넘어간다. (위키 안에 새로 쓰는 작업은 확인이 필요 없다 — AGENTS.md 5절)
 5. **리뷰 쓰기** — `wiki/papers/<slug>/review.md`의 뼈대(TODO 주석)를 채운다. 형식은 `references/wiki-format.md`, 예시는 `references/review_example.md`.
    - frontmatter: `category`, `tags`(paper + 주제어 2–4개), `essence`, 점수 5개, `citekey`(Zotero 값 우선), `status: reviewed`, `review_date: 오늘`.

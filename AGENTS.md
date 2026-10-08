@@ -23,7 +23,7 @@
 
 ## 3. CLI
 - macOS/Linux `./llmwiki <명령>` · Windows `.\llmwiki.cmd <명령>` (문서의 `llmwiki`를 이렇게 바꿔 실행).
-- 명령: doctor · zotero next|search|get|import|collections|status · extract · finish <slug> · related [--write|<slug>] · hubs · clusters · search · find · figures · sections · index · log · lint · site · serve · sample · init. 자세한 옵션은 `--help`.
+- 명령: doctor · zotero next|search|get|import|collections|status · extract · finish <slug> · meta --refresh <slug> · related [--write|<slug>] · hubs · clusters · search · find · figures · sections · index · log · lint · site · serve · sample · init. 자세한 옵션은 `--help`.
 - 인터넷이 막히면 `--offline`. `zotero search` 키워드는 **영어로 번역**해서 넣는다. 컬렉션 기본값은 `llmwiki.yaml`의 `practice_collection`.
 
 ## 4. 쓰기 규칙

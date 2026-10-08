@@ -14,6 +14,8 @@ from . import SCHEMA_VERSION
 from .util import RELATED_END, RELATED_HEADING, RELATED_START, REVIEW_HEADINGS, Workspace, is_pipe_table_line, project_mds, read_text, split_frontmatter
 from .wikiops import SKIP_NAMES, TODO_RE, get_section, iter_links, load_papers, resolve_link, strip_comments
 
+META_PENDING_MSG = ("{k}를 아직 못 넣었어요(서지 사이트가 잠시 바빴거나 PDF에 정보가 없음). 잠시 뒤 Codex에 「저자 다시 채워 줘」라고 하거나 "
+                    "`llmwiki meta --refresh {slug}` 로 다시 해 보세요. 그래도 없으면 review.md에 직접 적어도 돼요")
 REQUIRED_FM = ["title", "authors", "year", "slug", "category", "tags", "essence", "status", "schema_version",
                "score_novelty", "score_technical", "score_significance", "score_clarity", "score"]
 OPTIONAL_FM = ["date", "doi", "arxiv", "venue", "url", "citekey", "zotero_key", "pdf", "review_date"]
@@ -68,8 +70,13 @@ def run(ws: Workspace) -> list[Issue]:
             if k not in fm:
                 add("ERROR", "frontmatter", rp, f"필수 키 없음: {k}")
             elif fm[k] in (None, "", []) and k not in ("category",):
+                if k in ("authors", "year") and (fm.get("meta_pending") or p.meta.get("meta_pending")):
+                    add("WARN", "meta-pending", rp, META_PENDING_MSG.format(k="저자" if k == "authors" else "연도", slug=p.slug))
+                    continue
                 lvl = "WARN" if fm.get("status") == "draft" else "ERROR"
                 add(lvl, "frontmatter", rp, f"값이 비어 있음: {k}")
+        if fm.get("scanned") or p.meta.get("scanned"):
+            add("WARN", "scanned", rp, "글자가 없는 스캔본이라 리뷰를 비워 뒀어요 — 글자가 들어 있는 PDF(출판사·arXiv 판)를 넣으면 채울 수 있어요")
         if fm.get("slug") and fm["slug"] != p.slug:
             add("ERROR", "frontmatter", rp, f"slug({fm['slug']})가 폴더 이름({p.slug})과 다름")
         if fm.get("schema_version") and fm["schema_version"] != SCHEMA_VERSION:

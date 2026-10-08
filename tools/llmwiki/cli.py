@@ -14,6 +14,7 @@ HELP_EPILOG = """자주 쓰는 순서:
   llmwiki zotero next                     실습 컬렉션에서 최근 추가한 논문 1편을 골라 바로 넣기
   (또는) llmwiki zotero search "키워드" → llmwiki zotero import <KEY> / llmwiki extract "논문.pdf"
   → 에이전트가 review.md 작성 →
+  llmwiki meta --refresh <slug>           저자·연도 등 빈 서지 칸만 다시 채우기(서지 사이트가 바빴을 때)
   llmwiki finish <slug>                   related --write + index + log + lint 한 번에 (+ 위키 화면 갱신)
   llmwiki site --open                     브라우저로 내 위키 보기 (site/index.html, (선택) llmwiki serve)
 """
@@ -152,6 +153,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--slug", help="폴더 이름 직접 지정")
     s.add_argument("--force", action="store_true", help="이미 있는 논문도 다시 추출(review.md는 보존)")
     s.add_argument("--offline", action="store_true", help="메타데이터 보강(네트워크) 생략")
+
+    s = sub.add_parser("meta", help="서지(저자·연도 등) 빈 칸만 다시 채우기: llmwiki meta --refresh <slug>")
+    s.add_argument("slug")
+    s.add_argument("--refresh", action="store_true", help="arXiv·Crossref·OpenAlex로 빈 칸만 다시 채움(있는 값은 그대로)")
+    s.add_argument("--offline", action="store_true")
 
     s = sub.add_parser("related", help="관련 논문 계산 (TF-IDF + BM25 → RRF, 저자·연도 규칙)")
     s.add_argument("--write", action="store_true", help="각 review.md의 '## Related Papers' 자동 블록 갱신")
@@ -396,6 +402,8 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
                 author = (ir.get("authors") or [p["first_author"]])[0] or "저자 미상"
                 tag = " [Zotero 단독 PDF → 서지는 PDF에서 찾음, 제목 확인 필요]" if p.get("standalone_pdf") else ""
                 print(f"고른 논문: {title} ({year}, {author}) → wiki/papers/{res.get('slug', '')}/{tag}")
+                if ir.get("notice"):
+                    print(ir["notice"])
                 if res["other_candidates"]:
                     print("다른 후보: " + " · ".join(f"[{c['pick']}] {c['title'][:50]}" for c in res["other_candidates"]))
             return 0 if res["status"] in ("ok", "duplicate", "dry-run") else 1
@@ -412,12 +420,23 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
             res = extract_to_wiki(ws, Path(item["pdf"]), seed=ingest_seed(item), slug=args.slug, force=args.force,
                                   network=False if args.offline else None)
             res["zotero_backend"] = backend.name
+            if res.get("notice"):
+                print(res["notice"], file=sys.stderr)
             _print(res)
+        return 0
+
+    if args.cmd == "meta":
+        from .ingest import refresh_meta
+        res = refresh_meta(ws, args.slug, network=not args.offline)
+        print(res["message"], file=sys.stderr)
+        _print(res)
         return 0
 
     if args.cmd == "extract":
         from .ingest import extract_to_wiki
         res = extract_to_wiki(ws, Path(args.pdf), slug=args.slug, force=args.force, network=False if args.offline else None)
+        if res.get("notice"):
+            print(res["notice"], file=sys.stderr)
         _print(res)
         return 0 if res["status"] in ("ok", "duplicate") else 1
 
