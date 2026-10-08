@@ -120,7 +120,7 @@ def run(ws: Workspace | None, offline: bool = False, as_json: bool = False) -> i
             from . import serve
             idx = ws.root / "site" / "index.html"
             if not idx.exists():
-                rows.append(("INFO", "위키 화면", "아직 만들지 않음(선택) → Codex에게 「위키 화면 열어 줘」"))
+                rows.append(("INFO", "위키 화면", "아직 만들지 않음(설치 중이면 다음 단계에서 만듦) → 나중에는 Codex에게 「위키 화면 열어 줘」"))
             else:
                 reviews = list(ws.papers.glob("*/review.md")) if ws.papers.exists() else []
                 newest = max((r.stat().st_mtime for r in reviews), default=0)

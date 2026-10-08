@@ -545,7 +545,7 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
             site_st = next((x for x in res["steps"] if x["step"] == "site"), None)
             if site_st and not site_st.get("skipped"):
                 from .site import site_dir
-                print(f"위키 화면을 다시 만들었어요 → 브라우저에서 새로고침(F5 / Cmd+R) 하세요 ({(site_dir(ws) / 'index.html').resolve().as_uri()})")
+                print(f"위키 화면 파일: {(site_dir(ws) / 'index.html').resolve()}")
         print(res["result"])
         print(res["last_line"])
         return 0 if res["ok"] else 1
@@ -636,6 +636,8 @@ def _welcome(ws, args) -> int:
     if out["sample"] == "added":
         print("샘플 논문 3편을 넣었어요(나중에 「샘플 논문 빼 줘」로 뺄 수 있어요).")
     print(f"위키 화면: {out['file_url']}")
+    if out.get("index_path"):
+        print(f"  (폴더 경로: {out['index_path']})")
     print("브라우저로 열었어요." if out["opened"] else "이 주소를 브라우저 주소창에 붙여넣어 여세요.")
     return 0
 

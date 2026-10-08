@@ -540,7 +540,7 @@ class Builder:
         removed = self.prune()
         return {"site": self.ws.rel(self.out / "index.html"), "papers": len(self.papers), "topics": len(self.topics),
                 "drafts": len(self.drafts), "clusters": len(self.clusters), "search_items": len(self.index),
-                "removed_old_files": removed, "file_url": (self.out / "index.html").resolve().as_uri()}
+                "removed_old_files": removed, "file_url": (self.out / "index.html").resolve().as_uri(), "index_path": str((self.out / "index.html").resolve())}
 
 
 def _plain(md: str) -> str:
@@ -558,6 +558,7 @@ def build(ws: Workspace) -> dict[str, Any]:
 def summary_lines(res: dict[str, Any]) -> list[str]:
     return [f"위키 화면 파일을 만들었어요 ✅ 논문 {res['papers']}편 · 주제 {res['topics']}개 · 초안 {res['drafts']}개 · 검색 항목 {res['search_items']}개",
             f"열기: 이 파일을 브라우저로 여세요 → {res['file_url']}",
+            f"  (폴더 경로: {res.get('index_path') or res['file_url']})",
             "이미 열어 둔 화면이면 브라우저에서 새로고침(F5 / Cmd+R) 하세요.",
             "(선택) 주소로 보기: llmwiki serve → http://127.0.0.1:8765/"]
 
