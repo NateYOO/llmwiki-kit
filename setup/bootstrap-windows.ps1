@@ -196,14 +196,16 @@ if ($Target -match 'OneDrive') {
 if ($special -contains $Target -or $Target -match '^[A-Za-z]:\\?$') {
     Exit-WithError -Code 'E00' -Message "문서/바탕 화면/사용자 폴더(또는 드라이브 최상위) 자체를 열었습니다." -Hint "C:\llmwiki 같은 새 빈 폴더를 만들어 Codex 앱에서 열고 다시 시작하세요."
 }
-$ignore = @('desktop.ini', 'Thumbs.db', '.DS_Store', '.git', '.llmwiki-install.log', '.codex')
+# 내용이 있는 폴더도 멈추지 않는다: 원래 있던 파일·폴더는 덮어쓰기·삭제·이동 없이 그대로 두고 키트를 옆에 채운다.
+# (-AllowNonEmpty 는 예전 옵션 — 이제 기본 동작이라 받기만 한다)
+$null = $AllowNonEmpty
+$ignore = @('desktop.ini', 'Thumbs.db', '.DS_Store', '.localized', '.llmwiki-install.log')
 $entries = @(Get-ChildItem -LiteralPath $Target -Force | Where-Object { $ignore -notcontains $_.Name })
 $kitHere = (Test-Path -LiteralPath (Join-Path $Target 'tools\llmwiki\cli.py')) -and (Test-Path -LiteralPath (Join-Path $Target 'AGENTS.md'))
-if ($entries.Count -gt 0 -and -not $kitHere -and -not $AllowNonEmpty) {
-    $names = ($entries | Select-Object -First 8 | ForEach-Object { $_.Name }) -join ', '
-    Exit-WithError -Code 'E00' -Message "폴더가 비어 있지 않습니다: $names" -Hint "새 빈 폴더(권장: C:\llmwiki)를 열어 다시 시작하세요. 기존 연구 폴더에 넣으려면 README의 'llmwiki init' 방법을 쓰세요."
-}
-if ($kitHere) { Write-Line "  이미 키트가 있는 폴더 → 이어서 설치(기존 파일 보존)" } else { Write-Line "  빈 폴더 확인" }
+$preCount = if ($kitHere) { 0 } else { $entries.Count }
+if ($kitHere) { Write-Line "  이미 키트가 있는 폴더 → 이어서 설치(기존 파일 보존)" }
+elseif ($preCount -gt 0) { Write-Line ("  원래 있던 파일·폴더 {0}개 → 그대로 두고 옆에 설치(덮어쓰기·삭제·이동 없음)" -f $preCount) }
+else { Write-Line "  빈 폴더 확인" }
 if ($homeDir -match '[^\x00-\x7F]') { Write-Line "  참고: 사용자 폴더 이름에 한글이 있습니다. uv·Python은 지원하지만, 문제가 생기면 오류 코드를 알려 주세요." }
 if ($CheckOnly) {
     Write-Line ""
@@ -433,10 +435,17 @@ if ($wel -and -not $wel.error -and $wel.file_url) {
     Write-Line ("위키 화면: 아직 못 만들었어요(설치는 끝남) - 새 채팅에서 「위키 화면 열어 줘」라고 말하세요. ({0})" -f $why)
 }
 Write-Line ""
+$agentExtra = ''
+if ($preCount -gt 0) { Write-Line ("이 폴더에 원래 있던 파일·폴더 {0}개는 그대로 두었어요(덮어쓰기·삭제·이동 없음)." -f $preCount) }
+$agentsAlt = Join-Path $Target 'AGENTS.llmwiki.md'
+if ((Test-Path -LiteralPath $agentsAlt) -and (Test-Path -LiteralPath (Join-Path $Target 'AGENTS.md')) -and -not (Select-String -LiteralPath (Join-Path $Target 'AGENTS.md') -SimpleMatch 'llmwiki' -Quiet)) {
+    Write-Line "이 폴더에 원래 AGENTS.md가 있어서 키트 안내는 AGENTS.llmwiki.md에 두었어요. Codex는 AGENTS.md만 읽으니, 키트 규칙을 쓰게 하려면 AGENTS.llmwiki.md 내용을 원래 AGENTS.md 끝에 붙여 넣으세요(스킬 3개는 지금도 쓸 수 있어요)."
+    $agentExtra = " Also, if there is a line starting with '이 폴더에 원래' above, read it to the student word for word before stopping."
+}
 Write-Line "다음: Codex 앱에서 이 폴더로 '새 채팅'을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요."
 Write-Line $doc.summary
 Write-Line "RESULT: OK"
-Write-Line "AGENT: Say to the student, in this order: (1) the line starting with '설치 완료' above; (2) the line starting with '위키 화면:' above word for word (it has the file:// address of the wiki screen; if it says it opened the browser, add '브라우저에 샘플 논문 3편이 보이면 성공이에요.'); (3) '새 채팅을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요.'; (4) 'Zotero를 켜고 Zotero 설정(윈도우: 편집 → 설정, 맥: Zotero → 설정) → 고급 → 기타 → 'Allow other applications on this computer to communicate with Zotero' 체크한 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요.' Then STOP."
+Write-Line "AGENT: Say to the student, in this order: (1) the line starting with '설치 완료' above; (2) the line starting with '위키 화면:' above word for word (it has the file:// address of the wiki screen; if it says it opened the browser, add '브라우저에 샘플 논문 3편이 보이면 성공이에요.'); (3) '새 채팅을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요.'; (4) 'Zotero를 켜고 Zotero 설정(윈도우: 편집 → 설정, 맥: Zotero → 설정) → 고급 → 기타 → 'Allow other applications on this computer to communicate with Zotero' 체크한 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요.' Then STOP.$agentExtra"
 # 받은 bootstrap 사본(임시 폴더)은 성공했을 때만 지운다 - 실패 때는 같은 명령으로 다시 실행할 수 있게(QA H37)
 if ($PSCommandPath -and ((Split-Path -Leaf $PSCommandPath) -eq 'llmwiki-bootstrap.ps1') -and ($PSCommandPath -like ([IO.Path]::GetTempPath() + '*'))) {
     Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue

@@ -64,12 +64,15 @@ if [ -d "$H/Library/Mobile Documents/com~apple~CloudDocs/Documents" ] || [ -d "$
   esac
 fi
 KIT_HERE=0; [ -f "$TARGET/tools/llmwiki/cli.py" ] && [ -f "$TARGET/AGENTS.md" ] && KIT_HERE=1
-# shellcheck disable=SC2010  # 화면 표시용 이름 목록
-OTHERS="$(cd "$TARGET" && ls -A | grep -v -x -e .DS_Store -e .git -e .llmwiki-install.log -e .codex -e .localized | head -8 | tr '\n' ' ')"
-if [ -n "$OTHERS" ] && [ $KIT_HERE -eq 0 ] && [ $ALLOW_NONEMPTY -eq 0 ]; then
-  die E00 "폴더가 비어 있지 않습니다: $OTHERS" "새 빈 폴더(권장: ~/llmwiki)를 열어 다시 시작하세요. 기존 연구 폴더에 넣으려면 README의 'llmwiki init' 방법을 쓰세요."
-fi
-[ $KIT_HERE -eq 1 ] && say "  이미 키트가 있는 폴더 → 이어서 설치(기존 파일 보존)" || say "  빈 폴더 확인"
+# 내용이 있는 폴더도 멈추지 않는다: 원래 있던 파일·폴더는 덮어쓰기·삭제·이동 없이 그대로 두고 키트를 옆에 채운다.
+# (--allow-nonempty 는 예전 옵션 — 이제 기본 동작이라 받기만 한다)
+: "$ALLOW_NONEMPTY"
+# shellcheck disable=SC2010  # 개수 세기용 이름 목록
+PRE_COUNT="$(cd "$TARGET" && ls -A | grep -v -x -e .DS_Store -e desktop.ini -e Thumbs.db -e .localized -e .llmwiki-install.log | wc -l | tr -d ' ')"
+[ $KIT_HERE -eq 1 ] && PRE_COUNT=0
+if [ $KIT_HERE -eq 1 ]; then say "  이미 키트가 있는 폴더 → 이어서 설치(기존 파일 보존)"
+elif [ "$PRE_COUNT" -gt 0 ]; then say "  원래 있던 파일·폴더 ${PRE_COUNT}개 → 그대로 두고 옆에 설치(덮어쓰기·삭제·이동 없음)"
+else say "  빈 폴더 확인"; fi
 if [ $CHECK_ONLY -eq 1 ]; then
   say ""; say "CHECK OK - 설치를 진행해도 됩니다."; say "RESULT: CHECK_OK"
   case "$REPO_URL" in
@@ -247,10 +250,16 @@ else:
     print("  브라우저로 열었어요. 안 보이면 위 주소를 브라우저 주소창에 붙여넣으세요." if d.get("opened") else "  위 주소를 브라우저 주소창에 붙여넣어 여세요.")
 ' 2>/dev/null | while IFS= read -r l; do say "$l"; done
 say ""
+AGENT_EXTRA=""
+[ "$PRE_COUNT" -gt 0 ] && say "이 폴더에 원래 있던 파일·폴더 ${PRE_COUNT}개는 그대로 두었어요(덮어쓰기·삭제·이동 없음)."
+if [ -f "$TARGET/AGENTS.llmwiki.md" ] && ! grep -q llmwiki "$TARGET/AGENTS.md" 2>/dev/null; then
+  say "이 폴더에 원래 AGENTS.md가 있어서 키트 안내는 AGENTS.llmwiki.md에 두었어요. Codex는 AGENTS.md만 읽으니, 키트 규칙을 쓰게 하려면 AGENTS.llmwiki.md 내용을 원래 AGENTS.md 끝에 붙여 넣으세요(스킬 3개는 지금도 쓸 수 있어요)."
+  AGENT_EXTRA=" Also, if there is a line starting with '이 폴더에 원래' above, read it to the student word for word before stopping."
+fi
 say "다음: Codex 앱에서 이 폴더로 '새 채팅'을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요."
 say "$(printf '%s\n' "$OUT" | tail -1)"
 say "RESULT: OK"
-say "AGENT: Say to the student, in this order: (1) the line starting with '설치 완료' above; (2) the line starting with '위키 화면:' above word for word (it has the file:// address of the wiki screen; if it says it opened the browser, add '브라우저에 샘플 논문 3편이 보이면 성공이에요.'); (3) '새 채팅을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요.'; (4) 'Zotero를 켜고 Zotero 설정(윈도우: 편집 → 설정, 맥: Zotero → 설정) → 고급 → 기타 → 'Allow other applications on this computer to communicate with Zotero' 체크한 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요.' Then STOP."
+say "AGENT: Say to the student, in this order: (1) the line starting with '설치 완료' above; (2) the line starting with '위키 화면:' above word for word (it has the file:// address of the wiki screen; if it says it opened the browser, add '브라우저에 샘플 논문 3편이 보이면 성공이에요.'); (3) '새 채팅을 열고 「이 폴더의 AGENTS.md와 사용 가능한 스킬 목록을 말해줘」라고 보내세요.'; (4) 'Zotero를 켜고 Zotero 설정(윈도우: 편집 → 설정, 맥: Zotero → 설정) → 고급 → 기타 → 'Allow other applications on this computer to communicate with Zotero' 체크한 뒤, 새 채팅에서 「llmwiki doctor --offline 을 승인 요청으로 실행해 줘」라고 보내세요.' Then STOP.$AGENT_EXTRA"
 # 받은 bootstrap 사본은 성공했을 때만 지운다(QA H37)
 [ "$(basename "$0")" = "llmwiki-bootstrap.sh" ] && case "$0" in /tmp/*) rm -f "$0" ;; esac
 exit 0

@@ -46,6 +46,8 @@ def run(ws: Workspace | None, offline: bool = False, as_json: bool = False) -> i
                     ".agents/skills/wiki-query/SKILL.md", ".agents/skills/wiki-synthesize/SKILL.md"):
             (ok if (ws.root / rel).exists() else fail)(rel, "" if (ws.root / rel).exists() else "없음 → 키트를 다시 복사(llmwiki init)")
         agents = ws.root / "AGENTS.md"
+        if (ws.root / "AGENTS.llmwiki.md").exists() and agents.exists() and "llmwiki" not in agents.read_text(encoding="utf-8", errors="ignore"):
+            warn("키트 규칙(AGENTS)", "이 폴더에 원래 AGENTS.md가 있어서 키트 안내는 AGENTS.llmwiki.md에 두었어요. Codex는 AGENTS.md만 읽으니, 키트 규칙을 쓰게 하려면 AGENTS.llmwiki.md 내용을 원래 AGENTS.md 끝에 붙여 넣으세요(스킬 3개는 지금도 쓸 수 있어요).")
         if agents.exists():
             size = agents.stat().st_size
             (ok if size < 32 * 1024 else warn)("AGENTS.md 크기", f"{size} bytes" + ("" if size < 32 * 1024 else " — Codex 기본 상한 32KiB 초과"))
