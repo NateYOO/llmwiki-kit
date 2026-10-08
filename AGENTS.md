@@ -12,6 +12,7 @@
 | query, 질문, 정말 있나, 비교, 아이디어, 확장, 반론, 깊게 조사, 문구·그림 찾기, 이어서 써줘 | `.agents/skills/wiki-query/SKILL.md` |
 | lint, 점검, 링크 연결, 고아·중복 | `.agents/skills/wiki-lint/SKILL.md` |
 | synthesize, 서론 초안, 주제 탐색, 결합, 공통 한계, 이웃·허브·군집(네트워크) | `.agents/skills/wiki-synthesize/SKILL.md` |
+| query로 대화 → 정리되면 synthesize로 문서(「이 대화 문서로 정리해 줘」, 제안에 「응」「만들어 줘」) | `.agents/skills/wiki-query/SKILL.md` → `.agents/skills/wiki-synthesize/SKILL.md` |
 리뷰·주제 페이지를 쓸 때 형식 상세: `.agents/skills/wiki-ingest/references/wiki-format.md`.
 
 ## 2. 폴더

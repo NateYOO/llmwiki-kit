@@ -108,7 +108,7 @@ macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstra
 | 허브 논문 | `$wiki-synthesize 허브` → `drafts/net-hubs-…` |
 `$`가 안 되면 같은 내용을 말로 요청해도 됩니다(AGENTS.md가 SKILL.md를 읽게 함).
 
-`$wiki-query`는 **내 위키 안 자료만** 씁니다(웹 검색 안 함). 위키에 없으면 「없음」이라고 말하고 Zotero에 넣을 논문 검색어만 알려 줍니다. 답 끝에는 항상 「참고한 곳」(리뷰 파일 `wiki/papers/<slug>/review.md#섹션` · 원문 p.N · 화면 `site/papers/<slug>/index.html`)이 붙습니다. 짧은 답은 query, `drafts/`에 남길 긴 문서는 `$wiki-synthesize`.
+`$wiki-query`는 **내 위키 안 자료만** 씁니다(웹 검색 안 함). 위키에 없으면 「없음」이라고 말하고 Zotero에 넣을 논문 검색어만 알려 줍니다. 답 끝에는 항상 「참고한 곳」(리뷰 파일 `wiki/papers/<slug>/review.md#섹션` · 원문 p.N · 화면 `site/papers/<slug>/index.html`)이 붙습니다. 짧은 답은 query, `drafts/`에 남길 긴 문서는 `$wiki-synthesize`. 아이디어·비교·깊게 조사 답 끝에 「이 대화 내용을 문서 파일로 정리해 드릴까요?」가 붙고, 「응」이라고 하면 synthesize가 `drafts/`(또는 말한 주제 폴더)에 파일을 만듭니다.
 
 ### 3-1. 연구자 질문 예시 (복사해서 채팅창에)
 ```text
