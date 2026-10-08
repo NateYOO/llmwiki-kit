@@ -4,8 +4,9 @@
 > 원작: [이제현 박사님 · Paper Curation](https://github.com/jehyunlee/paper-curation) · 위키 구조: [Andrej Karpathy · LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
 > 이 키트는 두 아이디어(리뷰 형식, raw→wiki→schema 3층 구조)를 바탕으로 **새로 구현**했습니다. 원작의 코드는 한 줄도 복사하지 않았습니다(Paper Curation 저장소에는 라이선스가 없어 형식만 참고했습니다).
 
+0) 빈 폴더를 만들고 Codex 앱에서 [폴더 열기] (예: C:\llmwiki)
 1) 오른쪽 위 복사 버튼
-2) Codex 앱 새 채팅에 붙여넣기
+2) 새 채팅에 붙여넣기
 3) [승인]
 
 ```text
