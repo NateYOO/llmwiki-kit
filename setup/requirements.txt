@@ -1,0 +1,8 @@
+# 강의에서 검증한 버전으로 고정 (Windows/macOS 모두 컴파일 없이 휠로 설치됨, Python 3.10–3.14)
+# 직접 의존성 3개: pymupdf(PDF) · pyyaml(설정·frontmatter) · pyzotero(Zotero 로컬 API 클라이언트)
+#   pyzotero는 httpx2·whenever·feedparser·bibtexparser 등을 함께 설치한다.
+#   pyzotero가 없거나 실패해도 llmwiki는 표준 라이브러리 HTTP로 Zotero 로컬 API를 조회한다.
+# PyMuPDF는 AGPL-3.0 / Artifex 상용 이중 라이선스 — 개인 연구용 로컬 사용 기준
+pymupdf==1.28.2
+pyyaml==6.0.3
+pyzotero==1.15.2

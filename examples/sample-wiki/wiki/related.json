@@ -1,0 +1,56 @@
+{
+  "2023-yan-practical-ethical-challenges-large": [
+    {
+      "slug": "2024-schmucker-ruffle-riley-insights-designing",
+      "title": "Ruffle&Riley: Insights from Designing and Evaluating a Large Language Model-Based Conversational Tutoring System",
+      "relation": "alternative",
+      "reason": "TF-IDF 유사도 0.07 · BM25 1위 · 1년 뒤의 연구",
+      "cos": 0.0708,
+      "rrf": 0.03279
+    },
+    {
+      "slug": "2024-wang-tutor-copilot-human-ai-approach",
+      "title": "Tutor CoPilot: A Human-AI Approach for Scaling Real-Time Expertise",
+      "relation": "alternative",
+      "reason": "TF-IDF 유사도 0.05 · BM25 2위 · 1년 뒤의 연구",
+      "cos": 0.0512,
+      "rrf": 0.03226
+    }
+  ],
+  "2024-schmucker-ruffle-riley-insights-designing": [
+    {
+      "slug": "2023-yan-practical-ethical-challenges-large",
+      "title": "Practical and Ethical Challenges of Large Language Models in Education: A Systematic Scoping Review",
+      "relation": "alternative",
+      "reason": "TF-IDF 유사도 0.07 · BM25 1위 · 1년 앞선 연구",
+      "cos": 0.0708,
+      "rrf": 0.03252
+    },
+    {
+      "slug": "2024-wang-tutor-copilot-human-ai-approach",
+      "title": "Tutor CoPilot: A Human-AI Approach for Scaling Real-Time Expertise",
+      "relation": "alternative",
+      "reason": "TF-IDF 유사도 0.14 · BM25 2위 · 같은 해",
+      "cos": 0.1388,
+      "rrf": 0.03252
+    }
+  ],
+  "2024-wang-tutor-copilot-human-ai-approach": [
+    {
+      "slug": "2024-schmucker-ruffle-riley-insights-designing",
+      "title": "Ruffle&Riley: Insights from Designing and Evaluating a Large Language Model-Based Conversational Tutoring System",
+      "relation": "alternative",
+      "reason": "TF-IDF 유사도 0.14 · BM25 1위 · 같은 해",
+      "cos": 0.1388,
+      "rrf": 0.03279
+    },
+    {
+      "slug": "2023-yan-practical-ethical-challenges-large",
+      "title": "Practical and Ethical Challenges of Large Language Models in Education: A Systematic Scoping Review",
+      "relation": "alternative",
+      "reason": "TF-IDF 유사도 0.05 · BM25 2위 · 1년 앞선 연구",
+      "cos": 0.0512,
+      "rrf": 0.03226
+    }
+  ]
+}

@@ -1,0 +1,232 @@
+{
+  "arxiv": "2404.17460",
+  "sources": [
+    "arxiv",
+    "crossref-title(0.94)",
+    "openalex"
+  ],
+  "enrich_notes": [],
+  "title": "Ruffle&Riley: Insights from Designing and Evaluating a Large Language Model-Based Conversational Tutoring System",
+  "authors": [
+    "Robin Schmucker",
+    "Meng Xia",
+    "Amos Azaria",
+    "Tom Mitchell"
+  ],
+  "date": "2024-04-26",
+  "abstract": "Conversational tutoring systems (CTSs) offer learning experiences through interactions based on natural language. They are recognized for promoting cognitive engagement and improving learning outcomes, especially in reasoning tasks. Nonetheless, the cost associated with authoring CTS content is a major obstacle to widespread adoption and to research on effective instructional design. In this paper, we discuss and evaluate a novel type of CTS that leverages recent advances in large language models (LLMs) in two ways: First, the system enables AI-assisted content authoring by inducing an easily editable tutoring script automatically from a lesson text. Second, the system automates the script orchestration in a learning-by-teaching format via two LLM-based agents (Ruffle&Riley) acting as a student and a professor. The system allows for free-form conversations that follow the ITS-typical inner and outer loop structure. We evaluate Ruffle&Riley's ability to support biology lessons in two between-subject online user studies (N = 200) comparing the system to simpler QA chatbots and reading activity. Analyzing system usage patterns, pre/post-test scores and user experience surveys, we find that Ruffle&Riley users report high levels of engagement, understanding and perceive the offered support as helpful. Even though Ruffle&Riley users require more time to complete the activity, we did not find significant differences in short-term learning gains over the reading activity. Our system architecture and user study provide various insights for designers of future CTSs. We further open-source our system to support ongoing research on effective instructional design of LLM-based learning technologies.",
+  "url": "https://arxiv.org/abs/2404.17460",
+  "doi": "10.1007/978-3-031-64302-6_6",
+  "doi_source": "crossref title match 0.94 (다른 판본 DOI일 수 있음 — 확인)",
+  "venue": "Lecture Notes in Computer Science",
+  "openalex": "https://openalex.org/W4400208296",
+  "cited_by_count": 40,
+  "concepts": [
+    "Computer science",
+    "Orchestration",
+    "Reading (process)",
+    "Artificial intelligence",
+    "Multimedia"
+  ],
+  "year": "2024",
+  "slug": "2024-schmucker-ruffle-riley-insights-designing",
+  "pdf": "",
+  "page_count": 15,
+  "figures": [
+    {
+      "n": 1,
+      "page": 3,
+      "caption": "Fig. 1. UI of Ruffle&Riley. (a) Learners are asked to teach Ruffle (student agent) in a free-form conversation and request help as needed from Riley (professor agent). Ruffle tries to guide the learner to articulate the expectations in the tutoring script. (b) The learner can navigate the lesson material during the conversation. (c) Ruffle encourages the learner to explain the content. (d) Riley responds to a help request. (e) Riley detected a misconception and prompts the learner to revise their response.",
+      "file": "figures/fig1.png",
+      "method": "graphics-above",
+      "bbox": [
+        128.8,
+        109.8,
+        486.9,
+        353.6
+      ],
+      "px": [
+        717,
+        489
+      ],
+      "low_confidence": false
+    },
+    {
+      "n": 2,
+      "page": 5,
+      "caption": "Fig. 2. System architecture. Ruffle&Riley generates a tutoring script automatically from a lesson text by executing three separate prompts that induce questions, solutions and expectations for the EMT-based dialog. During the learning process, the script is orchestrated via two LLM-based conversational agents in a free-form dialog that follows the ITS-typical outer and inner loop structure.",
+      "file": "figures/fig2.png",
+      "method": "graphics-above",
+      "bbox": [
+        128.8,
+        109.8,
+        486.9,
+        293.6
+      ],
+      "px": [
+        717,
+        369
+      ],
+      "low_confidence": false
+    },
+    {
+      "n": 3,
+      "page": 6,
+      "caption": "Fig. 3. Tutoring script. To structure the conversational activity, Ruffle&Riley relies on a pre-generated script featuring a list of questions and related expectations for the EMT-based dialog. Tutoring scripts can be generated automatically from existing lessons text and offer instructional designers a convenient interface for system configuration.",
+      "file": "figures/fig3.png",
+      "method": "graphics-above",
+      "bbox": [
+        128.8,
+        110.0,
+        486.6,
+        263.0
+      ],
+      "px": [
+        717,
+        307
+      ],
+      "low_confidence": false
+    },
+    {
+      "n": 4,
+      "page": 10,
+      "caption": "Fig. 4. Temporal Interaction Patterns. By visualizing the usage of text navigation, chat response, and help request features over time, we observe four distinct usage patterns.",
+      "file": "figures/fig4.png",
+      "method": "graphics-above",
+      "bbox": [
+        128.8,
+        109.8,
+        488.4,
+        274.8
+      ],
+      "px": [
+        720,
+        331
+      ],
+      "low_confidence": false
+    }
+  ],
+  "tables": [
+    {
+      "n": 1,
+      "page": 8,
+      "caption": "Table 1. Learning performance across different learning conditions.",
+      "png": "tables/table1.png",
+      "method": "rules-below",
+      "bbox": [
+        128.8,
+        108.8,
+        486.6,
+        192.0
+      ],
+      "px": [
+        717,
+        167
+      ],
+      "low_confidence": false,
+      "md_note": "markdown 자동 추출 실패(이미지 표이거나 선 없는 표). PNG를 보고 필요한 값만 리뷰에 옮길 것"
+    },
+    {
+      "n": 2,
+      "page": 8,
+      "caption": "Table 2. Learning experience across different conditions. Symbol \"*\" indicates p < 0.05. Symbol \"-\" indicates that aspect was not asked in the respective condition.",
+      "png": "tables/table2.png",
+      "method": "rules-below",
+      "bbox": [
+        128.4,
+        202.2,
+        488.4,
+        292.2
+      ],
+      "px": [
+        721,
+        181
+      ],
+      "low_confidence": false,
+      "md_note": "markdown 자동 추출 실패(이미지 표이거나 선 없는 표). PNG를 보고 필요한 값만 리뷰에 옮길 것"
+    },
+    {
+      "n": 3,
+      "page": 9,
+      "caption": "Table 3. Learning performance for Ruffle&Riley and reading condition.",
+      "png": "tables/table3.png",
+      "method": "rules-below",
+      "bbox": [
+        128.8,
+        108.8,
+        486.6,
+        170.8
+      ],
+      "px": [
+        717,
+        125
+      ],
+      "low_confidence": false,
+      "md_note": "markdown 자동 추출 실패(이미지 표이거나 선 없는 표). PNG를 보고 필요한 값만 리뷰에 옮길 것"
+    },
+    {
+      "n": 4,
+      "page": 9,
+      "caption": "Table 4. Learning experience for Ruffle&Riley and reading condition. The symbol \"*\" indicates p < 0.05.",
+      "png": "tables/table4.png",
+      "method": "rules-below",
+      "bbox": [
+        128.4,
+        180.9,
+        488.0,
+        261.9
+      ],
+      "px": [
+        720,
+        163
+      ],
+      "low_confidence": false,
+      "md_note": "markdown 자동 추출 실패(이미지 표이거나 선 없는 표). PNG를 보고 필요한 값만 리뷰에 옮길 것"
+    },
+    {
+      "n": 5,
+      "page": 10,
+      "caption": "Table 5. Learning performance of Ruffle&Riley users for each usage patterns.",
+      "png": "tables/table5.png",
+      "method": "text-table-below+md:words",
+      "bbox": [
+        143.8,
+        273.2,
+        471.6,
+        352.7
+      ],
+      "px": [
+        657,
+        160
+      ],
+      "low_confidence": false,
+      "md": "tables/table5.md"
+    },
+    {
+      "n": 6,
+      "page": 11,
+      "caption": "Table 6. Pearson correlation analysis between conversation features and performance.",
+      "png": "tables/table6.png",
+      "method": "text-table-below+md:words",
+      "bbox": [
+        128.4,
+        108.8,
+        488.3,
+        196.3
+      ],
+      "px": [
+        721,
+        176
+      ],
+      "low_confidence": false,
+      "md": "tables/table6.md"
+    }
+  ],
+  "captions_found": {
+    "figure": 4,
+    "table": 6
+  },
+  "warnings": [],
+  "extracted_at": "2026-10-08T08:35:58",
+  "llmwiki_version": "0.1.0"
+}

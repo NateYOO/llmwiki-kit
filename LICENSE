@@ -1,0 +1,47 @@
+MIT License
+
+Copyright (c) 2026 llmwiki starter kit contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+-------------------------------------------------------------------------------
+NOTICE — scope of this license / 이 라이선스의 범위
+
+1. This MIT license covers only the code and documents written for this
+   starter kit. This kit is NOT the original work it is inspired by. It is an
+   independent re-implementation based on the ideas of:
+     - Paper Curation by Dr. Jehyun Lee (이제현 박사님),
+       https://github.com/jehyunlee/paper-curation  (review format, figure-
+       extraction and related-paper linking ideas; no code was copied — the
+       original repository did not state a license at the time of writing)
+     - Andrej Karpathy, "LLM Wiki" idea file,
+       https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
+   Credit for those ideas belongs to their authors; any mistakes are ours.
+   이제현 박사님의 Paper Curation 아이디어를 바탕으로 만들었습니다. 감사드립니다.
+
+2. Third-party dependencies keep their own licenses. In particular PyMuPDF is
+   dual-licensed AGPL-3.0 / Artifex commercial. Local personal research use is
+   the intended use; if you redistribute this kit as part of a network service,
+   check the AGPL obligations.
+
+3. Files under examples/sample-wiki/ contain figures, tables and extracted text
+   from open-access arXiv papers licensed CC BY 4.0. Those materials remain
+   under CC BY 4.0 with attribution to their original authors (see
+   examples/sample-wiki/ATTRIBUTION.md); they are not covered by the MIT
+   license above.
