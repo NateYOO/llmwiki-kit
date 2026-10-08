@@ -1,7 +1,7 @@
 # COMMANDS.md — 학생이 입력하는 모든 명령
 
 > 이제현 박사님의 Paper Curation(https://github.com/jehyunlee/paper-curation) 아이디어와 Karpathy LLM Wiki를 바탕으로 새로 만든 키트입니다. 감사드립니다.
-> CLI 옵션은 실제 `--help` 출력으로 확인했습니다: 하네스 저장소의 `example-run/logs/06_cli_help.log` (llmwiki 0.1.0).
+> CLI 옵션은 실제 `--help` 출력으로 확인했습니다 (llmwiki 0.1.0).
 > 표기: macOS `./llmwiki …` · Windows `.\llmwiki.cmd …` (아래 표는 `llmwiki`로 줄여 씀). 권장 모델: GPT-6 Luna(`gpt-6-luna`), 추론 노력 **Medium**.
 
 ## 1. 설치
@@ -100,7 +100,7 @@ macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstra
 | 미해결 빈틈 | `$wiki-synthesize 미해결빈틈` → `drafts/net-open-gaps-…` |
 | 링크 없는 군집 결합 | `$wiki-synthesize 군집결합` → `drafts/net-bridge-…` |
 | 허브 논문 | `$wiki-synthesize 허브` → `drafts/net-hubs-…` |
-`$`가 안 되면 같은 내용을 말로 요청해도 됩니다(AGENTS.md가 SKILL.md를 읽게 함). 실제 산출물 예는 강의 하네스의 `example-run/workspace/drafts/`.
+`$`가 안 되면 같은 내용을 말로 요청해도 됩니다(AGENTS.md가 SKILL.md를 읽게 함).
 
 ## 4. Codex CLI (선택, 터미널)
 | 목적 | 명령 |
