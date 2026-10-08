@@ -116,7 +116,9 @@ Windows에는 Git이 기본으로 없으므로 **Download ZIP**이 표준 수동
 | 하고 싶은 일 | 채팅에 |
 |---|---|
 | 논문 넣기 | `$wiki-ingest 최근 1편` (가장 기본) · `$wiki-ingest tutoring` · `$wiki-ingest raw/논문.pdf` |
-| 근거 있는 답 | `$wiki-query LLM 튜터의 학습 효과 근거는?` |
+| 근거 있는 답 | `$wiki-query LLM 튜터의 학습 효과 근거는?` (내 위키 안 자료만, 웹 검색 안 함, 끝에 「참고한 곳」) |
+| 연구자 질문 | `$wiki-query 정말 있나? …` · `비교: …` · `연구 확장: …` · `반론: …` · `깊게 조사: …` → [COMMANDS.md 3-1 연구자 질문 예시](COMMANDS.md#3-1-연구자-질문-예시-복사해서-채팅창에) |
+| 위키 화면 보기 | 「위키 화면 열어 줘」 · 「위키 화면 새로 만들어 줘」 · 「이 폴더에서 위키 화면 다시 켜 줘」 |
 | 문구·그림 찾기 | `"learning by teaching" 문구 어디 나와?` · `시스템 구조 그림 찾아줘` |
 | 점검 | `$wiki-lint` |
 | 서론 초안 | `$wiki-synthesize 서론 LLM 튜터링의 학습 효과` |
@@ -129,6 +131,7 @@ Windows에는 Git이 기본으로 없으므로 **Download ZIP**이 표준 수동
 | 링크 없는 군집 결합 | `$wiki-synthesize 군집결합` |
 | 허브 논문 | `$wiki-synthesize 허브` |
 결과는 `drafts/`에 저장되고 `wiki/log.md`에 기록됩니다. 모든 문장에 `[근거: 논문slug · 섹션/p.N]`이 붙습니다.
+**위키 화면(브라우저)**: `llmwiki site`가 `site/index.html`을 만듭니다. 이 파일을 브라우저로 열면(서버·인터넷 필요 없음) 논문 목록·연도/주제 필터·검색·논문별 리뷰·그림·관련 논문·원문 페이지·초안을 클릭하며 볼 수 있고, 모든 페이지의 **💬 Codex에게 물어보기** 버튼이 Codex 채팅에 붙여넣을 질문 문장을 복사해 줍니다. 주소로 보기(`llmwiki serve` → http://127.0.0.1:8765/)는 선택입니다.
 샘플로 연습하려면: `llmwiki sample` (3편이 `wiki/`에 들어옴). 학생이 입력하는 모든 명령은 [COMMANDS.md](COMMANDS.md), CLI 옵션은 `llmwiki <명령> --help`.
 
 ## 5. 승인 창에 대해

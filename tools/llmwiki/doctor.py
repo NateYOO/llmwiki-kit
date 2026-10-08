@@ -115,6 +115,25 @@ def run(ws: Workspace | None, offline: bool = False, as_json: bool = False) -> i
                 (ok if st == 200 else warn)(name, f"HTTP {st}")
             except Exception as e:  # noqa: BLE001
                 warn(name, f"연결 실패({type(e).__name__}) — 메타데이터 보강 없이도 추출은 됩니다")
+    if ws is not None:  # 위키 화면(선택) — 기본은 site/index.html을 파일로 열기, 주소 서버(serve)는 선택. WARN까지만, FAIL 없음
+        try:
+            from . import serve
+            idx = ws.root / "site" / "index.html"
+            if not idx.exists():
+                rows.append(("INFO", "위키 화면", "아직 만들지 않음(선택) → Codex에게 「위키 화면 열어 줘」"))
+            else:
+                reviews = list(ws.papers.glob("*/review.md")) if ws.papers.exists() else []
+                newest = max((r.stat().st_mtime for r in reviews), default=0)
+                cur = serve.running(ws.root)
+                st = serve.read_state(ws.root)
+                if newest > idx.stat().st_mtime + 1:
+                    warn("위키 화면", "위키보다 화면이 오래됐어요(선택) → Codex에게 「위키 화면 새로 만들어 줘」")
+                elif st and not cur:
+                    warn("위키 화면", "주소 서버가 꺼졌어요(선택) → 「이 폴더에서 위키 화면 다시 켜 줘」 · 파일로 보기는 그대로 됩니다")
+                else:
+                    ok("위키 화면", "site/index.html" + (f" · 주소 {cur['url']}" if cur else ""))
+        except Exception as e:  # noqa: BLE001
+            warn("위키 화면", f"확인 실패(선택): {str(e)[:80]}")
     codex = shutil.which("codex")
     rows.append(("INFO", "codex CLI", codex or "없음(데스크톱 앱만 써도 됨)"))
 

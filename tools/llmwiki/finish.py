@@ -75,6 +75,9 @@ def run(ws: Workspace, slug: str, *, op: str = "ingest", note: str = "") -> dict
         ok = not failed
     else:
         steps.append({"step": "log", "rc": 0, "skipped": True, "detail": "건너뜀 — 미완료라 기록하지 않음(완료 후 finish를 다시 부르면 기록)"})
+    from .site import try_rebuild
+    msg = try_rebuild(ws, only_if_exists=False)  # 위키 화면(site/) 갱신 — 실패해도 finish 결과에 영향 없음
+    steps.append({"step": "site", "rc": 0, "skipped": msg.startswith("화면 갱신 실패"), "detail": msg})
     if ok:
         result, last = "RESULT: OK", f"넣기 완료 ✅ {title} · 헤딩 {filled}/{total} · lint ERROR 0 (이 논문 WARN {len(warns)})"
     else:

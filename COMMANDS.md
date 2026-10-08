@@ -80,6 +80,8 @@ macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstra
 | `llmwiki index` | `wiki/index.md` 재생성 | |
 | `llmwiki log ingest "제목" --note "파일"` | `wiki/log.md`에 기록 | 종류: ingest, query, lint, draft, synthesize, related, setup, fix |
 | `llmwiki lint` | 기계 검사 | `--fix`(related+index 후 재검사), `--json` |
+| `llmwiki site` | **위키 화면 만들기**: `wiki/`·`drafts/` → `site/index.html`(논문 목록·연도/주제 필터·검색·논문별 리뷰·그림·관련 논문·원문 페이지·초안). 파일로 바로 열림(file://), 마지막에 열 경로와 새로고침 안내. `finish`·`log` 뒤 자동 갱신 | `--open`(브라우저로 열기), `--json` |
+| `llmwiki serve` | (선택) 위키 화면을 주소로 보기: http://127.0.0.1:8765/ (백그라운드, 이미 켜져 있으면 재사용, 포트가 쓰이고 있으면 다음 번호) | `--no-open`, `--stop`, `--status`, `--port N` |
 
 ## 3. 스킬 (채팅 한 줄)
 | 목적 | 프롬프트 |
@@ -87,6 +89,8 @@ macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstra
 | 논문 넣기 (기본) | `$wiki-ingest 최근 1편` → `zotero next` → 리뷰 → `finish` (묻지 않음) |
 | 논문 넣기 (골라서) | `$wiki-ingest tutoring` · `$wiki-ingest ABCD1234` · `$wiki-ingest raw/논문.pdf` · `$wiki-ingest 컬렉션 "내 컬렉션"에서` |
 | 근거 답변 | `$wiki-query LLM 튜터의 학습 효과 근거는?` |
+| 사실 확인·비교·아이디어·연구 확장·질문 다듬기·방법 고르기·반론 | `$wiki-query 정말 있나? …` · `$wiki-query 비교: …` 등 (아래 「연구자 질문 예시」) |
+| 깊게 조사 (관점 3–6개로 나눠 위키 안에서 조사) | `$wiki-query 깊게 조사: LLM 기반 튜터링의 효과와 한계` |
 | 문구 찾기 | `"learning by teaching" 문구 어디 나와?` |
 | 그림 찾기 | `시스템 구조 그림 찾아줘` |
 | 이어쓰기 | `drafts/문헌고찰.md 이어서 써줘` |
@@ -101,6 +105,32 @@ macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstra
 | 링크 없는 군집 결합 | `$wiki-synthesize 군집결합` → `drafts/net-bridge-…` |
 | 허브 논문 | `$wiki-synthesize 허브` → `drafts/net-hubs-…` |
 `$`가 안 되면 같은 내용을 말로 요청해도 됩니다(AGENTS.md가 SKILL.md를 읽게 함).
+
+`$wiki-query`는 **내 위키 안 자료만** 씁니다(웹 검색 안 함). 위키에 없으면 「없음」이라고 말하고 Zotero에 넣을 논문 검색어만 알려 줍니다. 답 끝에는 항상 「참고한 곳」(리뷰 파일 `wiki/papers/<slug>/review.md#섹션` · 원문 p.N · 화면 `site/papers/<slug>/index.html`)이 붙습니다. 짧은 답은 query, `drafts/`에 남길 긴 문서는 `$wiki-synthesize`.
+
+### 3-1. 연구자 질문 예시 (복사해서 채팅창에)
+```text
+$wiki-query 정말 있나? LLM 튜터가 학생 학습 성과를 높였다는 RCT가 내 위키에 있어? 어느 논문 몇 쪽?
+$wiki-query 비교: 학생과 직접 대화하는 LLM 튜터 vs 사람 튜터를 돕는 AI — 중학생 수학 수업에는 어느 쪽이 나을까?
+$wiki-query 아이디어: 내 위키 논문 2편 이상을 엮어서 새 연구 아이디어 3개 제안해 줘
+$wiki-query 연구 확장: Tutor CoPilot 연구를 대상·맥락·방법·변수 면에서 어떻게 넓힐 수 있을까?
+$wiki-query 연구질문 다듬기: "AI 튜터는 학습에 도움이 될까?"를 실제로 연구할 수 있는 질문으로 다듬어 줘
+$wiki-query 방법·데이터: 대학생 대상 AI 튜터 효과를 보려면 어떤 연구 설계와 측정 도구가 좋을까?
+$wiki-query 반론: "LLM 튜터는 학습 효과가 있다"는 주장의 약점과 반대 근거는?
+$wiki-query 깊게 조사: LLM 기반 튜터링의 효과와 한계
+$wiki-query 내 위키 논문들이 공통으로 다루지 않은 빈틈은 뭐야?
+$wiki-query 이 논문은 학생 개인정보를 어떻게 다뤘어? (참고: wiki/papers/2024-wang-tutor-copilot-human-ai-approach/review.md)
+```
+마지막 줄은 위키 화면의 **💬 Codex에게 물어보기** 버튼이 복사해 주는 문장과 같은 모양입니다(`<질문을 여기에>` 자리에 질문을 쓰세요).
+
+### 3-2. 위키 화면 (브라우저로 보기) — 채팅에 한 마디
+| 말하기 | Codex가 하는 일 |
+|---|---|
+| 「위키 화면 열어 줘」 | `llmwiki site --open` → `site/index.html`을 브라우저로 열고 file:// 경로를 알려 줌 |
+| 「위키 화면 새로 만들어 줘」 | 논문을 넣은 뒤 `llmwiki site` → "브라우저 새로고침(F5, 맥 Cmd+R)" 안내 |
+| 「이 폴더에서 위키 화면 다시 켜 줘」 | `llmwiki site --open`, 주소(serve)로 보던 경우 `llmwiki serve`도 다시 실행 |
+기본은 **파일로 열기**(서버·인터넷 필요 없음). 주소로 보고 싶으면(선택) `llmwiki serve` → http://127.0.0.1:8765/ , 끄기 `llmwiki serve --stop`. 주소 서버는 컴퓨터를 껐다 켜거나 Codex를 닫으면 꺼질 수 있습니다.
+화면에서: 위쪽 검색창(제목·저자·리뷰·그림 설명, `/` 키) · 연도/주제 필터 · 논문 페이지의 목차·그림·관련 논문·원문 페이지 · 초안 목록 · 모든 페이지의 **💬 Codex에게 물어보기**(질문 문장 복사 → Codex 채팅에 붙여넣기).
 
 ## 4. Codex CLI (선택, 터미널)
 | 목적 | 명령 |
@@ -121,3 +151,7 @@ macOS: curl -fsSL https://github.com/NateYOO/llmwiki-kit/raw/main/setup/bootstra
 | Zotero 검색 0건 | 영어 키워드로, 또는 `--everything` |
 | 스킬이 안 보임 | 연 폴더 맨 위에 AGENTS.md·`.agents/skills/` 확인 → 새 채팅 → 앱 재시작 |
 | 위키가 망가짐 | `llmwiki sample`로 샘플 3편 복구, `llmwiki lint --fix` |
+| 위키 화면이 없음·안 열림 | 채팅에 「위키 화면 열어 줘」(→ `llmwiki site --open`). 자동으로 안 열리면 안내된 `file:///…/site/index.html`을 브라우저 주소창에 붙여넣기 |
+| 새 논문이 화면에 안 보임 | 「위키 화면 새로 만들어 줘」 → 브라우저 새로고침(F5, 맥 Cmd+R) |
+| 주소(http://127.0.0.1:…)가 안 열림 | 「이 폴더에서 위키 화면 다시 켜 줘」(컴퓨터 재시작·Codex 종료 뒤 꺼질 수 있음). 그동안은 파일로 열기 |
+| 「Codex에게 물어보기」가 복사 안 됨 | 뜨는 상자의 선택된 글을 Ctrl+C(맥 ⌘+C) → Codex 채팅에 붙여넣기 |

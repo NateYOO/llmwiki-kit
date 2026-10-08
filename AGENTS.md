@@ -9,7 +9,7 @@
 | 요청 예 | 스킬 파일 |
 |---|---|
 | ingest, 넣어줘, 추가, 리뷰 써줘, Zotero에서 가져와, 이 PDF | `.agents/skills/wiki-ingest/SKILL.md` |
-| query, 질문, 찾아줘, 문구 어디, 그림 찾아줘, 아이디어, 이어서 써줘 | `.agents/skills/wiki-query/SKILL.md` |
+| query, 질문, 정말 있나, 비교, 아이디어, 확장, 반론, 깊게 조사, 문구·그림 찾기, 이어서 써줘 | `.agents/skills/wiki-query/SKILL.md` |
 | lint, 점검, 링크 연결, 고아·중복 | `.agents/skills/wiki-lint/SKILL.md` |
 | synthesize, 서론 초안, 주제 탐색, 결합, 공통 한계, 이웃·허브·군집(네트워크) | `.agents/skills/wiki-synthesize/SKILL.md` |
 리뷰·주제 페이지를 쓸 때 형식 상세: `.agents/skills/wiki-ingest/references/wiki-format.md`.
@@ -21,13 +21,14 @@
 
 ## 3. CLI
 - macOS/Linux `./llmwiki <명령>` · Windows `.\llmwiki.cmd <명령>` (문서의 `llmwiki`를 이렇게 바꿔 실행).
-- 명령: doctor · zotero next|search|get|import|collections|status · extract · finish <slug> · related [--write|<slug>] · hubs · clusters · search · find · figures · sections · index · log · lint · sample · init. 자세한 옵션은 `--help`.
+- 명령: doctor · zotero next|search|get|import|collections|status · extract · finish <slug> · related [--write|<slug>] · hubs · clusters · search · find · figures · sections · index · log · lint · site · serve · sample · init. 자세한 옵션은 `--help`.
 - 인터넷이 막히면 `--offline`. `zotero search` 키워드는 **영어로 번역**해서 넣는다. 컬렉션 기본값은 `llmwiki.yaml`의 `practice_collection`.
 
 ## 4. 쓰기 규칙
 - 한국어로 쓰되 기술 용어·모델명·통계량은 원어 그대로.
 - 사실 주장마다 근거 꼬리표 `[근거: <slug> · p.N]`(source.md의 `<!-- p.N -->`) 또는 `[근거: <slug> · 섹션]`. 확인한 수치만 쓴다. 근거 없으면 "위키에 근거 없음", 추측은 `(가설)`.
 - 원문 통째 복사 금지(직접 인용은 2문장 이하). 링크는 마크다운 상대 경로만(`[[…]]` 금지).
+- 질문 답은 내 위키 안 자료만 조합. **웹 검색 금지**(웹 검색 도구 쓰지 않음). 없으면 「없음」+Zotero 검색어. 끝에 항상 「참고한 곳」.
 - 위키·drafts를 바꾼 뒤: `llmwiki index` → `llmwiki log <ingest|query|lint|draft|synthesize> "제목" --note "파일"`.
 
 ## 5. 안전
@@ -37,3 +38,10 @@
 4. 명령이 실패하면 오류를 그대로 보여 주고 `llmwiki doctor`로 원인을 설명한다. 우회 코드를 짜지 않는다. 같은 오류가 두 번이면 멈춘다.
 5. Zotero API를 `curl`·`Invoke-RestMethod`로 직접 부르지 않는다(`llmwiki zotero`만). PowerShell 5.1에서 `>`로 파일 저장 금지(UTF-16이 됨).
 6. 인터넷이 필요한 명령이나 `.agents/` 쓰기 직전에는 "곧 승인 창이 뜹니다. [승인]을 누르세요"라고 먼저 말한다.
+
+## 6. 위키 화면 (브라우저)
+기본은 파일 `site/index.html` 열기(서버 불필요). `llmwiki serve`(http://127.0.0.1:8765/)는 선택.
+- 「위키 화면 열어 줘」 → `llmwiki site --open`, file:// 경로 안내.
+- 「위키 화면 새로 만들어 줘」 → `llmwiki site`, "브라우저 새로고침(F5, 맥 Cmd+R)" 안내.
+- 「이 폴더에서 위키 화면 다시 켜 줘」 → `llmwiki site --open`. `.llmwiki/serve.json`이 있으면 `llmwiki serve`도(승인 창이 뜨면 [승인]) 후 주소 안내.
+- 주소 서버는 컴퓨터 재시작·Codex 종료 때 꺼질 수 있다. 파일로 여는 화면은 그대로 된다.

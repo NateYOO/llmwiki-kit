@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -13,7 +14,8 @@ HELP_EPILOG = """자주 쓰는 순서:
   llmwiki zotero next                     실습 컬렉션에서 최근 추가한 논문 1편을 골라 바로 넣기
   (또는) llmwiki zotero search "키워드" → llmwiki zotero import <KEY> / llmwiki extract "논문.pdf"
   → 에이전트가 review.md 작성 →
-  llmwiki finish <slug>                   related --write + index + log + lint 한 번에
+  llmwiki finish <slug>                   related --write + index + log + lint 한 번에 (+ 위키 화면 갱신)
+  llmwiki site --open                     브라우저로 내 위키 보기 (site/index.html, (선택) llmwiki serve)
 """
 
 
@@ -202,6 +204,16 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("op", choices=["ingest", "query", "lint", "draft", "synthesize", "related", "setup", "fix"])
     s.add_argument("title")
     s.add_argument("--note", action="append", default=[], help="세부 bullet (여러 번 가능)")
+
+    s = sub.add_parser("site", help="위키 화면 만들기: wiki/·drafts/ → site/index.html (파일로 바로 열기, 검색·필터·복사 버튼)")
+    s.add_argument("--open", action="store_true", help="만든 뒤 site/index.html을 브라우저로 열기")
+    s.add_argument("--json", action="store_true")
+
+    s = sub.add_parser("serve", help="(선택) 위키 화면을 주소로 보기: site/를 http://127.0.0.1:8765/ 로 (백그라운드, 이미 켜져 있으면 재사용)")
+    s.add_argument("--port", type=_pos_int, default=8765, help="시작 포트 (사용 중이면 다음 포트, 기본 8765)")
+    s.add_argument("--no-open", action="store_true", help="브라우저를 자동으로 열지 않음")
+    s.add_argument("--stop", action="store_true", help="위키 화면 끄기")
+    s.add_argument("--status", action="store_true", help="켜져 있는지와 주소만 보기")
     return p
 
 
@@ -506,6 +518,10 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
     if args.cmd == "log":
         from .wikiops import append_log
         print(append_log(ws, args.op, args.title, args.note))
+        from .site import try_rebuild
+        msg = try_rebuild(ws)  # 위키 화면을 쓰고 있으면(site/ 있음) 가볍게 다시 만든다 — 실패해도 log는 성공
+        if msg:
+            print(f"(위키 화면: {msg})")
         return 0
 
     if args.cmd == "lint":
@@ -525,5 +541,78 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
             print(f"\n요약: ERROR {summ['errors']} · WARN {summ['warnings']}" + ("  ✅ 기계 검사 통과" if not summ["errors"] else ""))
         return 1 if summ["errors"] else 0
 
+    if args.cmd == "site":
+        from .site import build, summary_lines
+        res = build(ws)
+        if args.json:
+            _print(res)
+        else:
+            print("\n".join(summary_lines(res)))
+        if args.open and os.environ.get("LLMWIKI_NO_BROWSER") != "1":
+            try:
+                import webbrowser
+                webbrowser.open(res["file_url"])
+                print("브라우저로 열었어요. 안 열리면 위 file:// 주소를 브라우저 주소창에 붙여넣으세요.")
+            except Exception:  # noqa: BLE001
+                print("브라우저를 자동으로 열지 못했어요. 위 file:// 주소를 브라우저 주소창에 붙여넣으세요.")
+        print("RESULT: OK")
+        print(f"FILE: {res['file_url']}")
+        return 0
+
+    if args.cmd == "serve":
+        return _serve(ws, args)
+
     parser.print_help()
+    return 0
+
+
+def _serve(ws, args) -> int:
+    from . import serve
+    from .site import site_dir
+    index = site_dir(ws) / "index.html"
+    file_url = index.resolve().as_uri()
+    restart_tip = "컴퓨터를 껐다 켜거나 Codex를 닫으면 주소 서버가 꺼질 수 있어요 → Codex에게 「이 폴더에서 위키 화면 다시 켜 줘」라고 말하세요(파일로 여는 화면은 언제나 됩니다)."
+    if args.stop:
+        r = serve.stop(ws.root)
+        if not r["was_running"]:
+            print("위키 화면은 이미 꺼져 있어요.")
+        elif r["ok"]:
+            print(f"위키 화면을 껐어요 (포트 {r['port']}).")
+        else:
+            print(f"위키 화면을 끄지 못했어요 (포트 {r['port']}). 컴퓨터를 다시 켜면 꺼집니다.")
+        print("RESULT: OK" if r["ok"] else "RESULT: FAIL")
+        return 0 if r["ok"] else 1
+    if args.status:
+        cur = serve.running(ws.root)
+        if cur:
+            print(f"위키 화면 켜져 있음 ✅  {cur['url']}")
+            print(f"URL: {cur['url']}")
+        else:
+            print("주소 서버 꺼져 있음(선택 기능) — 파일로 보기: " + file_url + " · 다시 켜기: 「이 폴더에서 위키 화면 다시 켜 줘」 또는 llmwiki serve")
+            print("URL: (없음)")
+        return 0
+    if not index.exists():
+        from .site import build
+        r = build(ws)
+        print(f"화면 파일이 없어 먼저 만들었어요 (논문 {r['papers']}편 → site/index.html)")
+    res = serve.start(ws.root, args.port)
+    if not res["ok"]:
+        print(f"위키 화면 서버를 켜지 못했어요 ❌ {res['reason']}")
+        print(f"대신 이 파일을 브라우저로 여세요(검색·링크 모두 동작): {file_url}")
+        print("RESULT: FAIL")
+        return 1
+    url = res["url"]
+    print(f"위키 화면이 {'이미 켜져 있어요' if res['reused'] else '켜졌어요'} ✅  {url}")
+    if res["port"] != args.port and not res["reused"]:
+        print(f"(포트 {args.port}는 다른 프로그램이 쓰고 있어서 {res['port']}번으로 열었어요)")
+    print(f"주소가 안 열리면 이 파일을 브라우저로 여세요(기본 방법): {file_url}")
+    print(f"끄기: llmwiki serve --stop · {restart_tip}")
+    if not args.no_open and os.environ.get("LLMWIKI_NO_BROWSER") != "1":
+        try:
+            import webbrowser
+            webbrowser.open(url)
+        except Exception:  # noqa: BLE001
+            pass
+    print("RESULT: OK")
+    print(f"URL: {url}")
     return 0
